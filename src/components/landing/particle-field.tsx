@@ -130,6 +130,9 @@ export function ParticleField() {
     const mouse = { x: -9999, y: -9999 };
     let rafId = 0;
 
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     const handleResize = () => {
       const rect = section.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -137,15 +140,13 @@ export function ParticleField() {
       canvas.height = rect.height * dpr;
       canvas.style.width = `${rect.width}px`;
       canvas.style.height = `${rect.height}px`;
-      const ctx = canvas.getContext("2d");
-      if (ctx) ctx.scale(dpr, dpr);
+      ctx.scale(dpr, dpr);
       dims = { width: rect.width, height: rect.height };
       particles = createParticles(rect.width, rect.height);
     };
 
     const loop = () => {
-      const ctx = canvas.getContext("2d");
-      if (ctx) renderFrame(ctx, particles, mouse, dims.width, dims.height);
+      renderFrame(ctx, particles, mouse, dims.width, dims.height);
       rafId = requestAnimationFrame(loop);
     };
 
@@ -176,6 +177,7 @@ export function ParticleField() {
 
     return () => {
       cancelAnimationFrame(rafId);
+      clearTimeout(resizeTimer);
       window.removeEventListener("resize", debouncedResize);
       section.removeEventListener("mousemove", onMouseMove);
       section.removeEventListener("mouseleave", onMouseLeave);
