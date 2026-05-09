@@ -60,6 +60,53 @@
 
 ---
 
+## Deployment + Infrastructure -- IN PROGRESS
+
+### Done
+- [x] GitHub repo live at https://github.com/dpanshug/kubeflow-common-hubs
+- [x] Branch protection on `main` (require PR, 1 approval, CI must pass, no force push)
+- [x] CI/CD pipelines (CI, Claude Review, Claude Issues, Dependabot)
+
+### Vercel (Hosting) -- TODO
+- [ ] Connect Vercel to GitHub repo (vercel.com > Add New Project > select repo)
+- [ ] Verify auto-deploy on push to `main`
+- [ ] Verify preview deploys on PRs
+- [ ] Apply to Vercel OSS Program (https://vercel.com/open-source-program) for $3,600 credits
+
+### Domain -- TODO (when ready)
+- [ ] Purchase domain (e.g., `kubeflowcommonhubs.in` or `kfhubs.dev`)
+- [ ] Add custom domain in Vercel project settings
+- [ ] Configure DNS (CNAME to `cname.vercel-dns.com`)
+
+### Supabase (Auth + Database) -- TODO (Phase 2 prerequisite)
+- [ ] Create Supabase project at https://supabase.com/dashboard
+- [ ] Run database migrations (`npx drizzle-kit push`)
+- [ ] Enable Google and GitHub OAuth providers in Supabase Auth settings
+- [ ] Add Supabase env vars to Vercel: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`
+- [ ] Set up Supabase CLI for local dev (`supabase init`, `supabase start`)
+
+### Cloudflare R2 (File Storage) -- TODO (Phase 2 prerequisite)
+- [ ] Create R2 bucket in Cloudflare dashboard
+- [ ] Create API token with R2 read/write access
+- [ ] Enable public access on the bucket (for serving badge images, avatars)
+- [ ] Add R2 env vars to Vercel: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `NEXT_PUBLIC_R2_PUBLIC_URL`
+
+### Upstash Redis (Rate Limiting) -- TODO (Phase 2 prerequisite)
+- [ ] Create Upstash Redis database at https://upstash.com
+- [ ] Add env vars to Vercel: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+
+### Resend (Email) -- TODO (Phase 3 prerequisite)
+- [ ] Create Resend account at https://resend.com
+- [ ] Verify sending domain (once custom domain is set up)
+- [ ] Add env var to Vercel: `RESEND_API_KEY`
+
+### Sentry (Error Tracking) -- TODO (before launch)
+- [ ] Create Sentry project at https://sentry.io
+- [ ] Add env var to Vercel: `SENTRY_DSN`
+- [ ] Install `@sentry/nextjs` and configure
+
+---
+
 ## Phase 2: Auth + Profiles + GitHub Integration -- NOT STARTED
 
 - [ ] Supabase project setup (local Docker + remote)
