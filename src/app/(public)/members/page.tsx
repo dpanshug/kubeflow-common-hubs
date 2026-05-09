@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
 import { Search, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { LEVELS } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Members",
   description: "Meet the members of the Kubeflow community in India.",
 };
-
-function getLevelName(level: number): string {
-  return LEVELS.find((l) => l.level === level)?.name ?? "Newcomer";
-}
 
 const mockMembers = [
   { name: "Rahul Sharma", username: "rahulsharma", title: "ML Engineer", company: "Google", level: 6, badges: 14, location: "Bangalore" },

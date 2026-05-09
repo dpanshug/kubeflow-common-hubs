@@ -1,0 +1,132 @@
+name: Claude Issue Assistant
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: claude-issues-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+jobs:
+  claude-issue:
+    name: Claude Issue Assistant
+    timeout-minutes: 15
+    if: |
+      (github.event_name == 'issues' &&
+       github.actor != 'github-actions[bot]') ||
+      (github.event_name == 'issue_comment' &&
+       !github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@claude') &&
+       github.event.comment.author_association != 'NONE' &&
+       github.event.comment.author_association != 'FIRST_TIMER' &&
+       github.event.comment.author_association != 'FIRST_TIME_CONTRIBUTOR')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Claude Issue Assistant
+        uses: anthropics/claude-code-action@v1
+        with:
+          use_vertex: "true"
+          track_progress: true
+          display_report: "true"
+          claude_args: '--model claude-opus-4-6 --max-turns 30 --allowedTools "Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh issue view:*),Bash(gh label create:*),Read,Glob,Grep"'
+          prompt: |
+            REPO: ${{ github.repository }}
+            ISSUE NUMBER: ${{ github.event.issue.number }}
+            EVENT: ${{ github.event_name }}
+            TRIGGER: ${{ github.event_name == 'issue_comment' && 'comment' || 'new_issue' }}
+            AUTHOR: ${{ github.event_name == 'issue_comment' && github.event.comment.user.login || github.event.issue.user.login }}
+
+            You are an AI assistant helping with GitHub issues for **Kubeflow Common Hubs**,
+            a Next.js 15 community platform (TypeScript, Tailwind CSS v4, Drizzle ORM, Supabase).
+
+            Read CLAUDE.md and AGENTS.md first for project context.
+
+            ## What you CAN do
+
+            - Triage and label issues
+            - Answer questions about the codebase by reading source files
+            - Analyze bug reports: identify root cause, which files are involved, suggest a fix approach
+            - Propose implementation plans for feature requests
+            - Ask clarifying questions when the issue is unclear
+
+            ## What you CANNOT do
+
+            - Do NOT create branches, push code, or open pull requests
+            - Do NOT edit any files
+            - Do NOT run npm, node, or any build/test commands
+            - You are READ-ONLY. Your job is to analyze and communicate, not to write code.
+
+            ## Step 1: Read the issue
+
+            Run `gh issue view ${{ github.event.issue.number }} --repo ${{ github.repository }} --comments`
+            to read the full issue and all comments.
+
+            If triggered by a comment (TRIGGER=comment), focus on what the commenter is asking.
+
+            ## Step 2: Categorize and respond
+
+            ### Bug Report
+            - Read the relevant source files to investigate
+            - Post a comment with:
+              - Root cause analysis (or your best hypothesis)
+              - Which files and lines are involved
+              - A suggested fix approach (describe the code changes needed)
+            - Apply the `bug` label
+
+            ### Feature Request
+            - Analyze how it would fit into the current codebase
+            - Post a comment with:
+              - Your understanding of the request
+              - Proposed implementation plan (which files to create/modify, approach)
+              - Trade-offs or concerns
+            - Apply the `enhancement` label
+
+            ### Question
+            - Read relevant code and documentation
+            - Post a clear, helpful answer
+            - Apply the `question` label
+
+            ### Unclear
+            - Ask specific clarifying questions (not generic "can you provide more info")
+            - Apply the `needs-info` label
+
+            ## Step 3: Apply labels
+
+            Use `gh issue edit` to apply labels. Create labels if they don't exist:
+            - `bug` (color: d73a4a)
+            - `enhancement` (color: a2eeef)
+            - `question` (color: d876e3)
+            - `needs-info` (color: fbca04)
+            - `good-first-issue` (color: 7057ff) — if the issue looks approachable for newcomers
+            - `priority:high` (color: b60205) — if the issue is a blocker or security concern
+            - `priority:low` (color: 0e8a16) — if the issue is minor or cosmetic
+
+            ## Rules
+
+            - Be concise and helpful. No walls of text.
+            - Read source files before making claims about the code.
+            - When you lack confidence, say so. Provide what analysis you can.
+            - Never mention "@claude" in your comments (it would re-trigger this workflow).
+              Say "tag me" or "mention me" when telling users to invoke you.
+            - For new issues, always apply at least one label.
+        env:
+          ANTHROPIC_VERTEX_PROJECT_ID: "itpc-gcp-ai-eng-claude"
+          CLOUD_ML_REGION: "us-east5"

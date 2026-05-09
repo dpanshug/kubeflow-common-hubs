@@ -28,7 +28,8 @@ jobs:
       (github.event_name == 'pull_request' &&
        github.event.pull_request.head.repo.full_name == github.repository &&
        github.event.pull_request.draft != true &&
-       github.actor != 'github-actions[bot]') ||
+       github.actor != 'github-actions[bot]' &&
+       github.actor != 'dependabot[bot]') ||
       (github.event_name == 'pull_request_review_comment' &&
        contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'issue_comment' &&
@@ -72,13 +73,13 @@ jobs:
 
       - name: Checkout code
         if: steps.check-paths.outputs.needs_review == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
         if: steps.check-paths.outputs.needs_review == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
 
@@ -216,7 +217,7 @@ jobs:
 
       - name: Checkout base branch
         if: steps.check-paths.outputs.needs_review == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.sha }}
 

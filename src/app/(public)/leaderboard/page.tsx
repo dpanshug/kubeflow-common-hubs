@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Trophy, TrendingUp, ArrowUp, Minus } from "lucide-react";
+import { TrendingUp, ArrowUp, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LEVELS } from "@/lib/constants";
 
@@ -173,7 +173,7 @@ export default function LeaderboardPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {risingStars.map((star, i) => (
+          {risingStars.map((star) => (
             <div
               key={star.name}
               className="flex items-center gap-4 p-4 rounded-xl border border-border bg-bg-secondary"
