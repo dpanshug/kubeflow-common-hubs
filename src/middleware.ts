@@ -26,22 +26,15 @@ function getRedisClient() {
   return _redis;
 }
 
-let _limiters: { auth: Ratelimit; standard: Ratelimit } | undefined;
-function createRateLimiters(redis: Redis) {
-  if (_limiters) return _limiters;
-  _limiters = {
-    auth: new Ratelimit({
-      redis,
-      limiter: Ratelimit.slidingWindow(5, "1 m"),
-      prefix: "rl:auth",
-    }),
-    standard: new Ratelimit({
-      redis,
-      limiter: Ratelimit.slidingWindow(60, "1 m"),
-      prefix: "rl:std",
-    }),
-  };
-  return _limiters;
+let _authLimiter: Ratelimit | undefined;
+function getAuthLimiter(redis: Redis) {
+  if (_authLimiter) return _authLimiter;
+  _authLimiter = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, "1 m"),
+    prefix: "rl:auth",
+  });
+  return _authLimiter;
 }
 
 function isProtectedRoute(pathname: string) {
@@ -59,33 +52,33 @@ function isAuthStrictRoute(pathname: string) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Rate limiting (only if Redis is configured)
-  const redis = getRedisClient();
-  if (redis) {
-    try {
-      const limiters = createRateLimiters(redis);
-      const identifier =
-        (request as unknown as { ip?: string }).ip ||
-        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        request.headers.get("x-real-ip") ||
-        "127.0.0.1";
+  // Rate limiting on auth routes only (brute-force protection)
+  if (isAuthStrictRoute(pathname)) {
+    const redis = getRedisClient();
+    if (redis) {
+      try {
+        const limiter = getAuthLimiter(redis);
+        const identifier =
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip") ||
+          "anonymous";
 
-      const limiter = isAuthStrictRoute(pathname) ? limiters.auth : limiters.standard;
-      const { success, limit, remaining, reset } = await limiter.limit(identifier);
+        const { success, limit, remaining, reset } = await limiter.limit(identifier);
 
-      if (!success) {
-        return new NextResponse("Too Many Requests", {
-          status: 429,
-          headers: {
-            "X-RateLimit-Limit": limit.toString(),
-            "X-RateLimit-Remaining": remaining.toString(),
-            "X-RateLimit-Reset": reset.toString(),
-            "Retry-After": Math.ceil((reset - Date.now()) / 1000).toString(),
-          },
-        });
+        if (!success) {
+          return new NextResponse("Too Many Requests", {
+            status: 429,
+            headers: {
+              "X-RateLimit-Limit": limit.toString(),
+              "X-RateLimit-Remaining": remaining.toString(),
+              "X-RateLimit-Reset": reset.toString(),
+              "Retry-After": Math.ceil((reset - Date.now()) / 1000).toString(),
+            },
+          });
+        }
+      } catch {
+        // Rate limiting failed — allow request through
       }
-    } catch {
-      // Rate limiting failed (Redis unavailable) — allow request through
     }
   }
 
