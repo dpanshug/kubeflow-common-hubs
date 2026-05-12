@@ -224,7 +224,12 @@ export function Header() {
         <div className="flex items-center gap-2 md:hidden">
           {user && <NotificationBell />}
           <button
-            className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              showSolid || mobileMenuOpen
+                ? "text-text-muted hover:text-text-primary hover:bg-bg-tertiary"
+                : "text-white/70 hover:text-white hover:bg-white/10"
+            )}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
