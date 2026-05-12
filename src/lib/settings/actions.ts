@@ -48,28 +48,21 @@ export async function getEmailPreferences() {
 }
 
 export async function changePassword(formData: FormData): Promise<ActionResult> {
-  const newPassword = formData.get("newPassword") as string;
-  const confirmPassword = formData.get("confirmPassword") as string;
+  const { resetPasswordSchema } = await import("@/lib/validations/auth");
 
-  if (!newPassword || newPassword.length < 8) {
-    return { error: "Password must be at least 8 characters" };
-  }
+  const raw = {
+    password: formData.get("newPassword") as string,
+    confirmPassword: formData.get("confirmPassword") as string,
+  };
 
-  if (newPassword !== confirmPassword) {
-    return { error: "Passwords do not match" };
-  }
-
-  if (!/[A-Z]/.test(newPassword)) {
-    return { error: "Password must contain at least one uppercase letter" };
-  }
-
-  if (!/[0-9]/.test(newPassword)) {
-    return { error: "Password must contain at least one number" };
+  const parsed = resetPasswordSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({
-    password: newPassword,
+    password: parsed.data.password,
   });
 
   if (error) {

@@ -199,6 +199,13 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
 export async function updateAvatarUrl(avatarUrl: string): Promise<ActionResult> {
   const user = await requireAuth();
 
+  const r2PublicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
+  const isValidR2Url = r2PublicUrl && avatarUrl.startsWith(r2PublicUrl);
+  const isValidExternalUrl = avatarUrl.startsWith("https://");
+  if (!isValidR2Url && !isValidExternalUrl) {
+    return { error: "Invalid avatar URL" };
+  }
+
   await db
     .update(users)
     .set({ avatarUrl })

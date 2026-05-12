@@ -9,15 +9,19 @@ const AUTH_STRICT_ROUTES = ["/login", "/signup", "/forgot-password"];
 const ONBOARDING_ROUTE = "/onboarding";
 const SUSPENDED_ROUTE = "/suspended";
 
+let _redis: Redis | null | undefined;
 function getRedisClient() {
+  if (_redis !== undefined) return _redis;
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
-  return new Redis({ url, token });
+  _redis = url && token ? new Redis({ url, token }) : null;
+  return _redis;
 }
 
+let _limiters: { auth: Ratelimit; standard: Ratelimit } | undefined;
 function createRateLimiters(redis: Redis) {
-  return {
+  if (_limiters) return _limiters;
+  _limiters = {
     auth: new Ratelimit({
       redis,
       limiter: Ratelimit.slidingWindow(5, "1 m"),
@@ -29,6 +33,7 @@ function createRateLimiters(redis: Redis) {
       prefix: "rl:std",
     }),
   };
+  return _limiters;
 }
 
 function isProtectedRoute(pathname: string) {
@@ -50,11 +55,11 @@ export async function middleware(request: NextRequest) {
   const redis = getRedisClient();
   if (redis) {
     const limiters = createRateLimiters(redis);
-    const ip =
-      request.headers.get("x-real-ip") ||
+    const identifier =
+      (request as unknown as { ip?: string }).ip ||
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
       "127.0.0.1";
-    const identifier = ip;
 
     const limiter = isAuthStrictRoute(pathname) ? limiters.auth : limiters.standard;
     const { success, limit, remaining, reset } = await limiter.limit(identifier);

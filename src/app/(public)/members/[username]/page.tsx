@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { eq, desc, or, and, isNull } from "drizzle-orm";
 import Link from "next/link";
@@ -27,7 +28,7 @@ interface PageProps {
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function getProfile(username: string) {
+const getProfile = cache(async function getProfile(username: string) {
   const isUUID = UUID_REGEX.test(username);
 
   const result = await db
@@ -45,7 +46,7 @@ async function getProfile(username: string) {
     .limit(1);
 
   return result[0] || null;
-}
+});
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { username } = await params;
@@ -75,29 +76,23 @@ export default async function MemberProfilePage({ params }: PageProps) {
 
   const level = LEVELS.find((l) => l.level === (profile?.level ?? 1)) || LEVELS[0];
 
-  // Fetch badges
-  const earnedBadges = await db
-    .select({
-      badge: badges,
-      awardedAt: userBadges.awardedAt,
-    })
-    .from(userBadges)
-    .innerJoin(badges, eq(userBadges.badgeId, badges.id))
-    .where(eq(userBadges.userId, user.id));
-
-  // Fetch activity
-  const activities = await db
-    .select()
-    .from(activityLog)
-    .where(eq(activityLog.userId, user.id))
-    .orderBy(desc(activityLog.createdAt))
-    .limit(20);
-
-  // Fetch contributions
-  const contributions = await db
-    .select()
-    .from(githubContributions)
-    .where(eq(githubContributions.userId, user.id));
+  const [earnedBadges, activities, contributions] = await Promise.all([
+    db
+      .select({ badge: badges, awardedAt: userBadges.awardedAt })
+      .from(userBadges)
+      .innerJoin(badges, eq(userBadges.badgeId, badges.id))
+      .where(eq(userBadges.userId, user.id)),
+    db
+      .select()
+      .from(activityLog)
+      .where(eq(activityLog.userId, user.id))
+      .orderBy(desc(activityLog.createdAt))
+      .limit(20),
+    db
+      .select()
+      .from(githubContributions)
+      .where(eq(githubContributions.userId, user.id)),
+  ]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
