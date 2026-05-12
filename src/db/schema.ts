@@ -109,7 +109,7 @@ export const activityTypeEnum = pgEnum("activity_type", [
 
 // ─── USERS ──────────────────────────────────────────────
 export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id").primaryKey(),
   email: text("email").unique().notNull(),
   name: text("name").notNull(),
   avatarUrl: text("avatar_url"),
@@ -139,6 +139,21 @@ export const profiles = pgTable("profiles", {
   points: integer("points").default(0).notNull(),
   level: integer("level").default(1).notNull(),
   onboardingCompleted: boolean("onboarding_completed").default(false).notNull(),
+  contributionCalendar: jsonb("contribution_calendar").$type<Record<string, number>>(),
+  emailPreferences: jsonb("email_preferences")
+    .$type<{
+      badgeEarned: boolean;
+      cfpStatusChange: boolean;
+      eventReminders: boolean;
+      weeklyDigest: boolean;
+    }>()
+    .default({
+      badgeEarned: true,
+      cfpStatusChange: true,
+      eventReminders: true,
+      weeklyDigest: true,
+    })
+    .notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

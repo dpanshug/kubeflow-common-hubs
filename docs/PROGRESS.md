@@ -60,19 +60,46 @@
 
 ---
 
-## Phase 2: Auth + Profiles + GitHub Integration -- NOT STARTED
+## Phase 2: Auth + Profiles + GitHub Integration -- COMPLETE
 
-- [ ] Supabase project setup (local Docker + remote)
-- [ ] Supabase Auth: Google, GitHub, email/password sign-in
-- [ ] Auth middleware chain: rate limiter, auth check, RBAC, suspension check
-- [ ] 3-step onboarding wizard (name/avatar, GitHub link, pick interests)
-- [ ] User profile page (tabbed: overview, badges, contributions, CFPs, timeline)
-- [ ] Profile edit with React Hook Form + Zod validation
-- [ ] Avatar upload to Cloudflare R2 (presigned URLs, size/type validation)
-- [ ] GitHub contribution sync via GraphQL API (batched, rate-limit handling)
-- [ ] Contribution heatmap component (GitHub-style grid)
-- [ ] Notification system: DB table + bell icon + Supabase Realtime
-- [ ] Settings page (theme, email preferences, linked accounts)
+### Authentication
+- [x] Supabase project setup (remote Postgres, Auth, Realtime)
+- [x] Supabase Auth: Google, GitHub, email/password sign-in
+- [x] Auth middleware chain: Upstash rate limiter, session refresh, RBAC, suspension check
+- [x] JWT custom claims hook (is_suspended, onboarding_completed injected into token)
+- [x] RLS policies on all 14 tables
+- [x] Auth callback + email confirmation routes
+- [x] Login, signup, forgot-password, reset-password pages
+- [x] Suspended account page
+
+### Onboarding & Profiles
+- [x] 3-step onboarding wizard (name/avatar, GitHub link, pick interests)
+- [x] Onboarding auto-fills from OAuth provider data (GitHub username, avatar, name)
+- [x] User profile page (tabbed: overview, badges, contributions, timeline)
+- [x] Profile edit with React Hook Form + Zod validation
+- [x] Unified public profile at `/members/[username]`
+- [x] Level ring with animated arc around avatar
+- [x] Empty states for badges, contributions, and timeline sections
+
+### GitHub Integration
+- [x] GitHub contribution sync via GraphQL API (batched, rate-limit handling)
+- [x] Contribution heatmap component (GitHub-style grid)
+- [x] Cron endpoint for scheduled GitHub sync
+- [x] Manual sync button on profile contributions tab
+
+### Notifications & Settings
+- [x] Notification system: DB table + bell icon + Supabase Realtime (with polling fallback)
+- [x] Notifications page with mark-as-read and mark-all-as-read
+- [x] Settings page: email preferences (auto-saving toggles), linked accounts, change password
+- [x] Account deletion (soft delete with sign-out)
+
+### Infrastructure
+- [x] Upstash Redis for rate limiting
+- [x] Avatar upload API route (Cloudflare R2 -- optional, gracefully disabled when unconfigured)
+- [x] Custom ThemeProvider (React 19 compatible, replaced next-themes)
+- [x] @tanstack/react-query for client data fetching
+- [x] Drizzle ORM relations for all tables
+- [x] Global 404 page, error boundaries, loading states
 
 ---
 
