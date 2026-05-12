@@ -85,10 +85,18 @@ export async function updateOnboardingStep2(formData: FormData): Promise<ActionR
       return { error: "Failed to verify GitHub username. Please try again." };
     }
 
-    await db
-      .update(profiles)
-      .set({ githubUsername: parsed.data.githubUsername })
-      .where(eq(profiles.userId, user.id));
+    try {
+      await db
+        .update(profiles)
+        .set({ githubUsername: parsed.data.githubUsername })
+        .where(eq(profiles.userId, user.id));
+    } catch (err: unknown) {
+      const errStr = String(err);
+      if (errStr.includes("unique") || errStr.includes("duplicate") || errStr.includes("github_username")) {
+        return { error: "This GitHub username is already linked to another account." };
+      }
+      return { error: "Failed to save GitHub username. Please try again." };
+    }
   }
 
   return { success: true };
@@ -170,22 +178,30 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
     return { error: parsed.error.issues[0].message };
   }
 
-  await db
-    .update(profiles)
-    .set({
-      displayName: parsed.data.displayName,
-      title: parsed.data.title || null,
-      company: parsed.data.company || null,
-      location: parsed.data.location || null,
-      bio: parsed.data.bio || null,
-      githubUsername: parsed.data.githubUsername || null,
-      linkedinUrl: parsed.data.linkedinUrl || null,
-      twitterHandle: parsed.data.twitterHandle || null,
-      website: parsed.data.website || null,
-      skills: parsed.data.skills.length > 0 ? parsed.data.skills : null,
-      interests: parsed.data.interests.length > 0 ? parsed.data.interests : null,
-    })
-    .where(eq(profiles.userId, user.id));
+  try {
+    await db
+      .update(profiles)
+      .set({
+        displayName: parsed.data.displayName,
+        title: parsed.data.title || null,
+        company: parsed.data.company || null,
+        location: parsed.data.location || null,
+        bio: parsed.data.bio || null,
+        githubUsername: parsed.data.githubUsername || null,
+        linkedinUrl: parsed.data.linkedinUrl || null,
+        twitterHandle: parsed.data.twitterHandle || null,
+        website: parsed.data.website || null,
+        skills: parsed.data.skills.length > 0 ? parsed.data.skills : null,
+        interests: parsed.data.interests.length > 0 ? parsed.data.interests : null,
+      })
+      .where(eq(profiles.userId, user.id));
+  } catch (err: unknown) {
+    const errStr = String(err);
+    if (errStr.includes("unique") || errStr.includes("duplicate") || errStr.includes("github_username")) {
+      return { error: "This GitHub username is already linked to another account." };
+    }
+    return { error: "Failed to update profile. Please try again." };
+  }
 
   await db
     .update(users)
