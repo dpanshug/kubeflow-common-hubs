@@ -60,8 +60,12 @@ export function useNotifications(userId: string | undefined) {
     });
 
     return () => {
-      channel.unsubscribe();
-      supabase.removeChannel(channel);
+      try {
+        channel.unsubscribe();
+        supabase.removeChannel(channel);
+      } catch {
+        // Channel may not have subscribed yet if component unmounted quickly
+      }
     };
   }, [userId, incrementCount]);
 

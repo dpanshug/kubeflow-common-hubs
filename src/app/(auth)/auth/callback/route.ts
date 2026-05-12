@@ -14,10 +14,12 @@ export async function GET(request: Request) {
     if (!error) {
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocalEnv = process.env.NODE_ENV === "development";
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      const allowedHosts = siteUrl ? [new URL(siteUrl).host] : [];
 
       if (isLocalEnv) {
         return NextResponse.redirect(`${origin}${next}`);
-      } else if (forwardedHost) {
+      } else if (forwardedHost && allowedHosts.includes(forwardedHost)) {
         return NextResponse.redirect(`https://${forwardedHost}${next}`);
       } else {
         return NextResponse.redirect(`${origin}${next}`);
