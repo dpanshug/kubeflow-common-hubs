@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { signOut } from "@/lib/auth/actions";
 
-function Logo() {
+function Logo({ overDark }: { overDark?: boolean }) {
   return (
     <Link href="/" className="flex items-center gap-3 group">
       <div className="relative">
@@ -21,7 +21,12 @@ function Logo() {
           <span className="text-white font-bold text-[15px] tracking-tight">KF</span>
         </div>
       </div>
-      <span className="font-semibold hidden sm:inline-block text-[15px] text-text-primary group-hover:text-[var(--kf-blue)] transition-colors">
+      <span className={cn(
+        "font-semibold hidden sm:inline-block text-[15px] transition-colors",
+        overDark
+          ? "text-white group-hover:text-white/80"
+          : "text-text-primary group-hover:text-[var(--kf-blue)]"
+      )}>
         {SITE_NAME}
       </span>
     </Link>
@@ -112,13 +117,13 @@ export function Header() {
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        showSolid
-          ? "glass border-b border-border shadow-lg"
+        showSolid || mobileMenuOpen
+          ? "bg-bg-primary border-b border-border shadow-lg"
           : "bg-transparent"
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Logo />
+        <Logo overDark={!showSolid} />
 
         {/* Desktop nav */}
         <nav
@@ -126,7 +131,7 @@ export function Header() {
             "hidden md:flex items-center gap-0.5 rounded-full px-1.5 py-1 border transition-colors duration-300",
             showSolid
               ? "bg-bg-tertiary/50 border-border"
-              : "bg-bg-tertiary/30 border-border/50"
+              : "bg-white/10 border-white/10"
           )}
         >
           {NAV_LINKS.map((link) => {
@@ -137,9 +142,13 @@ export function Header() {
                 href={link.href}
                 className={cn(
                   "px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200",
-                  isActive
-                    ? "text-text-primary bg-bg-secondary"
-                    : "text-text-muted hover:text-text-primary hover:bg-bg-secondary/50"
+                  showSolid
+                    ? isActive
+                      ? "text-text-primary bg-bg-secondary"
+                      : "text-text-muted hover:text-text-primary hover:bg-bg-secondary/50"
+                    : isActive
+                      ? "text-white bg-white/15"
+                      : "text-white/70 hover:text-white hover:bg-white/10"
                 )}
               >
                 {link.label}
@@ -151,14 +160,24 @@ export function Header() {
         {/* Desktop actions */}
         <div className="hidden md:flex items-center gap-2">
           <button
-            className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              showSolid
+                ? "text-text-muted hover:text-text-primary hover:bg-bg-tertiary"
+                : "text-white/70 hover:text-white hover:bg-white/10"
+            )}
             aria-label="Search"
           >
             <Search className="size-[18px]" />
           </button>
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              showSolid
+                ? "text-text-muted hover:text-text-primary hover:bg-bg-tertiary"
+                : "text-white/70 hover:text-white hover:bg-white/10"
+            )}
             aria-label="Toggle theme"
           >
             <Sun className="size-[18px] hidden dark:block" />
@@ -180,7 +199,12 @@ export function Header() {
                 <>
                   <Link
                     href="/login"
-                    className="text-[13px] font-medium text-text-muted hover:text-text-primary transition-colors px-3 py-1.5"
+                    className={cn(
+                      "text-[13px] font-medium transition-colors px-3 py-1.5",
+                      showSolid
+                        ? "text-text-muted hover:text-text-primary"
+                        : "text-white/70 hover:text-white"
+                    )}
                   >
                     Sign In
                   </Link>
@@ -200,7 +224,12 @@ export function Header() {
         <div className="flex items-center gap-2 md:hidden">
           {user && <NotificationBell />}
           <button
-            className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              showSolid || mobileMenuOpen
+                ? "text-text-muted hover:text-text-primary hover:bg-bg-tertiary"
+                : "text-white/70 hover:text-white hover:bg-white/10"
+            )}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
@@ -212,7 +241,7 @@ export function Header() {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden glass border-t border-border">
+        <div className="md:hidden bg-bg-primary border-t border-border">
           <nav className="flex flex-col p-4 gap-1">
             {NAV_LINKS.map((link) => {
               const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
@@ -259,6 +288,18 @@ export function Header() {
                 </Link>
               </>
             )}
+
+            <div className="border-t border-border my-2" />
+
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors w-full"
+              aria-label="Toggle theme"
+            >
+              <Sun className="size-4 hidden dark:block" />
+              <Moon className="size-4 dark:hidden" />
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            </button>
 
             <div className="border-t border-border my-2" />
             {user ? (

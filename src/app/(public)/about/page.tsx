@@ -67,8 +67,32 @@ export default function AboutPage() {
           ))}
         </div>
 
+        {/* Code of Conduct */}
+        <h2 className="text-2xl font-bold mb-4" id="code-of-conduct">
+          Code of Conduct
+        </h2>
+        <div className="text-text-secondary text-base leading-relaxed space-y-4 mb-12">
+          <p>
+            Kubeflow Common Hubs follows the{" "}
+            <a
+              href="https://github.com/cncf/foundation/blob/main/code-of-conduct.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--kf-blue)] underline underline-offset-2 hover:text-[var(--kf-blue-dark)]"
+            >
+              CNCF Code of Conduct
+            </a>
+            . We are committed to providing a welcoming and inspiring community for all. Harassment,
+            discrimination, and disrespectful behavior are not tolerated.
+          </p>
+          <p>
+            If you experience or witness unacceptable behavior, please report it by contacting
+            the community organizers. All reports will be handled with discretion and confidentiality.
+          </p>
+        </div>
+
         {/* Links */}
-        <h2 className="text-2xl font-bold mb-6" id="code-of-conduct">
+        <h2 className="text-2xl font-bold mb-6">
           Get Involved
         </h2>
         <div className="flex flex-wrap gap-3 mb-12 not-prose">

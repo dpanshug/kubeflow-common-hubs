@@ -3,7 +3,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { updateSession } from "@/lib/supabase/middleware";
 
-const PROTECTED_ROUTES = ["/profile/edit", "/settings", "/notifications"];
+const PROTECTED_ROUTES = ["/profile", "/settings", "/notifications"];
 const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password"];
 const AUTH_STRICT_ROUTES = ["/login", "/signup", "/forgot-password"];
 const ONBOARDING_ROUTE = "/onboarding";
