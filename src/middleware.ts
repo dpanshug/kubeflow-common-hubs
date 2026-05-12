@@ -14,7 +14,15 @@ function getRedisClient() {
   if (_redis !== undefined) return _redis;
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  _redis = url && token ? new Redis({ url, token }) : null;
+  if (!url || !token) {
+    _redis = null;
+    return _redis;
+  }
+  try {
+    _redis = new Redis({ url, token });
+  } catch {
+    _redis = null;
+  }
   return _redis;
 }
 
@@ -54,26 +62,30 @@ export async function middleware(request: NextRequest) {
   // Rate limiting (only if Redis is configured)
   const redis = getRedisClient();
   if (redis) {
-    const limiters = createRateLimiters(redis);
-    const identifier =
-      (request as unknown as { ip?: string }).ip ||
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "127.0.0.1";
+    try {
+      const limiters = createRateLimiters(redis);
+      const identifier =
+        (request as unknown as { ip?: string }).ip ||
+        request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        request.headers.get("x-real-ip") ||
+        "127.0.0.1";
 
-    const limiter = isAuthStrictRoute(pathname) ? limiters.auth : limiters.standard;
-    const { success, limit, remaining, reset } = await limiter.limit(identifier);
+      const limiter = isAuthStrictRoute(pathname) ? limiters.auth : limiters.standard;
+      const { success, limit, remaining, reset } = await limiter.limit(identifier);
 
-    if (!success) {
-      return new NextResponse("Too Many Requests", {
-        status: 429,
-        headers: {
-          "X-RateLimit-Limit": limit.toString(),
-          "X-RateLimit-Remaining": remaining.toString(),
-          "X-RateLimit-Reset": reset.toString(),
-          "Retry-After": Math.ceil((reset - Date.now()) / 1000).toString(),
-        },
-      });
+      if (!success) {
+        return new NextResponse("Too Many Requests", {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": limit.toString(),
+            "X-RateLimit-Remaining": remaining.toString(),
+            "X-RateLimit-Reset": reset.toString(),
+            "Retry-After": Math.ceil((reset - Date.now()) / 1000).toString(),
+          },
+        });
+      }
+    } catch {
+      // Rate limiting failed (Redis unavailable) — allow request through
     }
   }
 
