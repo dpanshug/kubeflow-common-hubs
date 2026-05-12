@@ -248,7 +248,7 @@ function LinkedAccountsSection({
         </div>
       </div>
       {linkError && (
-        <p className="text-xs text-red-400 mt-3">{linkError}</p>
+        <p role="alert" className="text-xs text-red-400 mt-3">{linkError}</p>
       )}
       <p className="text-[11px] text-text-muted mt-3">
         Linking accounts with the same email will automatically merge your identities.
