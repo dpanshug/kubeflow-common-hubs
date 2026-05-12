@@ -179,11 +179,16 @@ function LinkedAccountsSection({
   const isGoogleLinked = linkedProviders.some((p) => p.provider === "google");
   const isGithubLinked = linkedProviders.some((p) => p.provider === "github");
 
+  const [linkError, setLinkError] = useState<string | null>(null);
+
   function handleLink(provider: "google" | "github") {
+    setLinkError(null);
     startTransition(async () => {
       const result = await linkOAuthProvider(provider);
       if (result.url) {
         window.location.href = result.url;
+      } else if (result.error) {
+        setLinkError(result.error);
       }
     });
   }
@@ -242,6 +247,9 @@ function LinkedAccountsSection({
           )}
         </div>
       </div>
+      {linkError && (
+        <p className="text-xs text-red-400 mt-3">{linkError}</p>
+      )}
       <p className="text-[11px] text-text-muted mt-3">
         Linking accounts with the same email will automatically merge your identities.
       </p>
