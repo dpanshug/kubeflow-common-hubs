@@ -120,19 +120,20 @@ export async function createNews(input: CreateNewsInput) {
   const parsed = createNewsSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
 
-  const slug = await ensureUniqueSlug(parsed.data.slug || slugify(parsed.data.title));
-  const isPublishing = input.status === "published";
+  const data = parsed.data;
+  const slug = await ensureUniqueSlug(data.slug || slugify(data.title));
+  const isPublishing = data.status === "published";
 
   const [created] = await db
     .insert(newsPosts)
     .values({
-      title: input.title,
+      title: data.title,
       slug,
-      content: input.content,
-      excerpt: input.excerpt || null,
-      coverImageUrl: input.coverImageUrl || null,
-      tags: input.tags ?? null,
-      status: input.status,
+      content: data.content,
+      excerpt: data.excerpt || null,
+      coverImageUrl: data.coverImageUrl || null,
+      tags: data.tags ?? null,
+      status: data.status,
       authorId: actor.id,
       publishedAt: isPublishing ? new Date() : null,
     })
@@ -143,7 +144,7 @@ export async function createNews(input: CreateNewsInput) {
     action: "news.created",
     targetType: "news",
     targetId: created?.id,
-    newValues: { title: input.title, slug },
+    newValues: { title: data.title, slug },
   });
 
   revalidatePath("/admin/news");
@@ -159,25 +160,26 @@ export async function updateNews(id: string, input: CreateNewsInput) {
   const validInput = createNewsSchema.safeParse(input);
   if (!validInput.success) return { error: validInput.error.issues[0]?.message ?? "Invalid input" };
 
+  const data = validInput.data;
   const existing = await getNewsById(parsedId.data);
   if (!existing) return { error: "News post not found" };
 
-  const slug = input.slug && input.slug !== existing.slug
-    ? await ensureUniqueSlug(input.slug, parsedId.data)
+  const slug = data.slug && data.slug !== existing.slug
+    ? await ensureUniqueSlug(data.slug, parsedId.data)
     : existing.slug;
 
-  const isNewlyPublished = input.status === "published" && existing.status !== "published";
+  const isNewlyPublished = data.status === "published" && existing.status !== "published";
 
   await db
     .update(newsPosts)
     .set({
-      title: input.title,
+      title: data.title,
       slug,
-      content: input.content,
-      excerpt: input.excerpt || null,
-      coverImageUrl: input.coverImageUrl || null,
-      tags: input.tags ?? null,
-      status: input.status,
+      content: data.content,
+      excerpt: data.excerpt || null,
+      coverImageUrl: data.coverImageUrl || null,
+      tags: data.tags ?? null,
+      status: data.status,
       publishedAt: isNewlyPublished ? new Date() : existing.publishedAt,
       updatedAt: new Date(),
     })
@@ -188,7 +190,7 @@ export async function updateNews(id: string, input: CreateNewsInput) {
     action: "news.updated",
     targetType: "news",
     targetId: parsedId.data,
-    newValues: { title: input.title },
+    newValues: { title: data.title },
   });
 
   revalidatePath("/admin/news");

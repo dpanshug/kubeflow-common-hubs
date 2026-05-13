@@ -92,17 +92,18 @@ export async function createCfp(input: CreateCfpInput) {
   const parsed = createCfpSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
 
+  const data = parsed.data;
   const [created] = await db
     .insert(cfps)
     .values({
-      title: input.title,
-      description: input.description,
-      guidelines: input.guidelines || null,
-      deadline: new Date(input.deadline),
-      topics: input.topics ?? null,
-      acceptedFormats: input.acceptedFormats ?? null,
-      status: input.status,
-      eventId: input.eventId || null,
+      title: data.title,
+      description: data.description,
+      guidelines: data.guidelines || null,
+      deadline: new Date(data.deadline),
+      topics: data.topics ?? null,
+      acceptedFormats: data.acceptedFormats ?? null,
+      status: data.status,
+      eventId: data.eventId || null,
       createdBy: actor.id,
     })
     .returning({ id: cfps.id });
@@ -112,7 +113,7 @@ export async function createCfp(input: CreateCfpInput) {
     action: "cfp.created",
     targetType: "cfp",
     targetId: created?.id,
-    newValues: { title: input.title },
+    newValues: { title: data.title },
   });
 
   revalidatePath("/admin/cfps");
@@ -128,17 +129,18 @@ export async function updateCfp(id: string, input: CreateCfpInput) {
   const parsed = createCfpSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
 
+  const data = parsed.data;
   await db
     .update(cfps)
     .set({
-      title: input.title,
-      description: input.description,
-      guidelines: input.guidelines || null,
-      deadline: new Date(input.deadline),
-      topics: input.topics ?? null,
-      acceptedFormats: input.acceptedFormats ?? null,
-      status: input.status,
-      eventId: input.eventId || null,
+      title: data.title,
+      description: data.description,
+      guidelines: data.guidelines || null,
+      deadline: new Date(data.deadline),
+      topics: data.topics ?? null,
+      acceptedFormats: data.acceptedFormats ?? null,
+      status: data.status,
+      eventId: data.eventId || null,
       updatedAt: new Date(),
     })
     .where(eq(cfps.id, parsedId.data));
@@ -148,7 +150,7 @@ export async function updateCfp(id: string, input: CreateCfpInput) {
     action: "cfp.updated",
     targetType: "cfp",
     targetId: parsedId.data,
-    newValues: { title: input.title },
+    newValues: { title: data.title },
   });
 
   revalidatePath("/admin/cfps");

@@ -101,17 +101,18 @@ export async function createBadge(input: CreateBadgeInput) {
   const parsed = createBadgeSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
 
+  const data = parsed.data;
   const [created] = await db
     .insert(badges)
     .values({
-      name: input.name,
-      description: input.description,
-      imageUrl: input.imageUrl || null,
-      criteriaDescription: input.criteriaDescription || null,
-      category: input.category,
-      tier: input.tier,
-      isAuto: input.isAuto,
-      pointsValue: input.pointsValue,
+      name: data.name,
+      description: data.description,
+      imageUrl: data.imageUrl || null,
+      criteriaDescription: data.criteriaDescription || null,
+      category: data.category,
+      tier: data.tier,
+      isAuto: data.isAuto,
+      pointsValue: data.pointsValue,
       createdBy: actor.id,
     })
     .returning({ id: badges.id });
@@ -121,7 +122,7 @@ export async function createBadge(input: CreateBadgeInput) {
     action: "badge.created",
     targetType: "badge",
     targetId: created?.id,
-    newValues: { name: input.name },
+    newValues: { name: data.name },
   });
 
   revalidatePath("/admin/badges");
@@ -155,7 +156,7 @@ export async function updateBadge(id: string, input: Partial<CreateBadgeInput>) 
     action: "badge.updated",
     targetType: "badge",
     targetId: parsedId.data,
-    newValues: input as Record<string, unknown>,
+    newValues: safe as Record<string, unknown>,
   });
 
   revalidatePath("/admin/badges");
@@ -193,12 +194,13 @@ export async function awardBadge(badgeId: string, userId: string, reason?: strin
   const parsed = awardBadgeSchema.safeParse({ badgeId, userId, reason });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
 
+  const data = parsed.data;
   try {
     await db.insert(userBadges).values({
-      badgeId,
-      userId,
+      badgeId: data.badgeId,
+      userId: data.userId,
       awardedBy: actor.id,
-      reason: reason || null,
+      reason: data.reason || null,
     });
   } catch (err: unknown) {
     if (err instanceof Error && err.message.includes("unique")) {
@@ -212,7 +214,7 @@ export async function awardBadge(badgeId: string, userId: string, reason?: strin
     action: "badge.awarded",
     targetType: "user_badge",
     targetId: userId,
-    newValues: { badgeId, reason },
+    newValues: { badgeId: data.badgeId, reason: data.reason },
   });
 
   revalidatePath("/admin/badges");
