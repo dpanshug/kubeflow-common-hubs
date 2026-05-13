@@ -1,8 +1,7 @@
 import { cache } from "react";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth/guards";
+import { ArrowLeft } from "lucide-react";
 import { getCfpById, getCfpSubmissions } from "@/lib/cfp/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,9 +22,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const cfp = await getCachedCfp(id);
-  return {
-    title: cfp ? `Review: ${cfp.title}` : "Review Submissions",
-  };
+  return { title: cfp ? `Review: ${cfp.title}` : "Review Submissions" };
 }
 
 const STATUS_FILTERS = [
@@ -42,14 +39,6 @@ export default async function AdminSubmissionsPage({
   params,
   searchParams,
 }: PageProps) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) redirect("/login");
-
-  const role = currentUser.user.role;
-  if (role !== "admin" && role !== "superadmin" && role !== "moderator") {
-    redirect("/");
-  }
-
   const { id } = await params;
   const { status: statusFilter } = await searchParams;
 
@@ -59,37 +48,13 @@ export default async function AdminSubmissionsPage({
   const { items } = await getCfpSubmissions(id, statusFilter || "all");
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
-      {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="mb-6">
-        <ol className="flex items-center gap-1.5 text-sm text-text-muted">
-          <li>
-            <Link
-              href="/admin/cfps"
-              className="hover:text-text-primary transition-colors"
-            >
-              Admin: CFPs
-            </Link>
-          </li>
-          <li aria-hidden="true">
-            <ChevronRight className="size-3.5" />
-          </li>
-          <li className="text-text-secondary truncate max-w-[200px] sm:max-w-none">
-            {cfp.title}
-          </li>
-        </ol>
-      </nav>
-
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-1">
-          <Badge variant="default">Admin</Badge>
-          <h1 className="text-2xl font-bold">Submissions</h1>
-        </div>
+    <div className="max-w-5xl space-y-6">
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold">Submissions</h1>
         <p className="text-sm text-text-secondary">{cfp.title}</p>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filter by status">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by status">
         {STATUS_FILTERS.map((filter) => {
           const isActive =
             (!statusFilter && filter.value === "all") ||
@@ -115,7 +80,6 @@ export default async function AdminSubmissionsPage({
         })}
       </div>
 
-      {/* Submissions list */}
       {items.length === 0 ? (
         <div className="text-center py-12 text-text-muted">
           <p>No submissions found{statusFilter ? ` with status "${statusFilter}"` : ""}.</p>
@@ -149,9 +113,7 @@ export default async function AdminSubmissionsPage({
                         </span>
                       )}
                     </div>
-                    <h3 className="font-semibold mb-1 truncate">
-                      {sub.title}
-                    </h3>
+                    <h3 className="font-semibold mb-1 truncate">{sub.title}</h3>
                     <p className="text-xs text-text-muted">
                       by {sub.speakerName}
                     </p>
@@ -169,8 +131,7 @@ export default async function AdminSubmissionsPage({
         </div>
       )}
 
-      {/* Back */}
-      <div className="mt-8">
+      <div className="pt-4">
         <Button variant="outline" size="sm" asChild>
           <Link href="/admin/cfps">
             <ArrowLeft className="size-4" />

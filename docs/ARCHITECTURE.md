@@ -58,13 +58,21 @@ src/
 │   │   ├── leaderboard/    # /leaderboard
 │   │   ├── members/        # /members, /members/[username]
 │   │   └── about/          # /about
-│   ├── (dashboard)/        # Authenticated pages
+│   ├── (dashboard)/        # Authenticated pages (header/footer layout)
 │   │   ├── profile/        # /profile, /profile/edit
 │   │   ├── settings/       # /settings
 │   │   ├── notifications/  # /notifications
 │   │   ├── cfps/[id]/submit/ # /cfps/[id]/submit (3-step submission wizard)
-│   │   ├── submissions/    # /submissions, /submissions/[id]
-│   │   └── admin/cfps/     # /admin/cfps, /admin/cfps/[id]/submissions, .../[subId]
+│   │   └── submissions/    # /submissions, /submissions/[id]
+│   ├── (admin)/            # Admin panel (sidebar layout, moderator+ required)
+│   │   └── admin/
+│   │       ├── page.tsx    # /admin (dashboard metrics + recent activity)
+│   │       ├── users/      # /admin/users, /admin/users/[id]
+│   │       ├── events/     # /admin/events, /admin/events/new, /admin/events/[id]
+│   │       ├── cfps/       # /admin/cfps, /admin/cfps/new, /admin/cfps/[id], .../submissions
+│   │       ├── badges/     # /admin/badges, /admin/badges/new, /admin/badges/[id]
+│   │       ├── news/       # /admin/news, /admin/news/new, /admin/news/[id]
+│   │       └── audit-log/  # /admin/audit-log
 │   ├── (auth)/             # Auth flows (centered layout)
 │   │   ├── login/          # /login
 │   │   ├── signup/         # /signup
