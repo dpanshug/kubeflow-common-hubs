@@ -51,9 +51,9 @@ src/
 ├── app/                    # Next.js App Router
 │   ├── (public)/           # Marketing + directory pages (header/footer)
 │   │   ├── page.tsx        # Landing page (/)
-│   │   ├── events/         # /events
-│   │   ├── news/           # /news
-│   │   ├── cfps/           # /cfps
+│   │   ├── events/         # /events, /events/[slug]
+│   │   ├── news/           # /news, /news/[slug]
+│   │   ├── cfps/           # /cfps, /cfps/[id]
 │   │   ├── badges/         # /badges
 │   │   ├── leaderboard/    # /leaderboard
 │   │   ├── members/        # /members, /members/[username]
@@ -82,7 +82,7 @@ src/
 │   ├── landing/            # Hero, sections, particle field
 │   ├── profile/            # Heatmap, level ring, tabs, timeline
 │   ├── notifications/      # NotificationBell
-│   ├── common/             # Shared utilities
+│   ├── common/             # Shared utilities (ShareButton, Skeleton)
 │   └── providers.tsx       # ThemeProvider + QueryClientProvider
 ├── lib/
 │   ├── supabase/           # client.ts, server.ts, middleware.ts, admin.ts
