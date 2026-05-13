@@ -74,7 +74,7 @@ export default function LeaderboardPage() {
               className={cn(
                 "flex flex-col items-center p-6 rounded-xl border bg-bg-secondary text-center",
                 isFirst
-                  ? "border-[var(--tier-gold)]/30 sm:-mt-4 shadow-lg shadow-[var(--tier-gold)]/5"
+                  ? "order-first sm:order-none border-[var(--tier-gold)]/30 sm:-mt-4 shadow-lg shadow-[var(--tier-gold)]/5"
                   : "border-border"
               )}
             >

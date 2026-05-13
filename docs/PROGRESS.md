@@ -33,8 +33,11 @@
 
 ### Public Pages
 - [x] `/events` -- Event listing with type filters, date chips, attendee counts
+- [x] `/events/[slug]` -- Event detail page with info grid, RSVP link, description, related events
 - [x] `/news` -- News articles with tags, author, timestamps
-- [x] `/cfps` -- Open CFPs with deadline countdowns, topic tags, submit CTAs
+- [x] `/news/[slug]` -- News article detail page with author card, read time, related posts
+- [x] `/cfps` -- Open CFPs with deadline countdowns, topic tags, detail CTAs
+- [x] `/cfps/[id]` -- CFP detail page with guidelines, topics, "submission coming soon" placeholder
 - [x] `/badges` -- Badge catalog with tier indicators, earn counts, category filters
 - [x] `/leaderboard` -- Podium top 3, ranking table, trend arrows, Rising Stars
 - [x] `/members` -- Member directory with search, avatars, level, badge counts
@@ -56,70 +59,73 @@
 ### Code Quality
 - [x] 27 code review findings fixed (accessibility, performance, security)
 - [x] Zero lint errors, zero type errors, clean production build
-- [x] All 8 routes statically prerendered
+- [x] All 14 routes statically prerendered (8 list + 4 event + 3 news + 3 CFP detail pages)
 
 ---
 
-## Deployment + Infrastructure -- IN PROGRESS
+## Deployment + Infrastructure -- COMPLETE
 
 ### Done
 - [x] GitHub repo live at https://github.com/dpanshug/kubeflow-common-hubs
 - [x] Branch protection on `main` (require PR, 1 approval, CI must pass, no force push)
 - [x] CI/CD pipelines (CI, Claude Review, Claude Issues, Dependabot)
+- [x] Vercel connected to GitHub repo with auto-deploy on push to `main`
+- [x] Supabase project created (Auth, Postgres, Realtime configured)
+- [x] Database migrations run (auth triggers, JWT hook, RLS policies)
+- [x] Google and GitHub OAuth providers enabled in Supabase Auth
+- [x] All env vars added to Vercel production
+- [x] Upstash Redis configured for rate limiting
 
-### Vercel (Hosting) -- TODO
-- [ ] Connect Vercel to GitHub repo (vercel.com > Add New Project > select repo)
-- [ ] Verify auto-deploy on push to `main`
-- [ ] Verify preview deploys on PRs
+### TODO
 - [ ] Apply to Vercel OSS Program (https://vercel.com/open-source-program) for $3,600 credits
-
-### Domain -- TODO (when ready)
 - [ ] Purchase domain (e.g., `kubeflowcommonhubs.in` or `kfhubs.dev`)
 - [ ] Add custom domain in Vercel project settings
-- [ ] Configure DNS (CNAME to `cname.vercel-dns.com`)
-
-### Supabase (Auth + Database) -- TODO (Phase 2 prerequisite)
-- [ ] Create Supabase project at https://supabase.com/dashboard
-- [ ] Run database migrations (`npx drizzle-kit push`)
-- [ ] Enable Google and GitHub OAuth providers in Supabase Auth settings
-- [ ] Add Supabase env vars to Vercel: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`
-- [ ] Set up Supabase CLI for local dev (`supabase init`, `supabase start`)
-
-### Cloudflare R2 (File Storage) -- TODO (Phase 2 prerequisite)
-- [ ] Create R2 bucket in Cloudflare dashboard
-- [ ] Create API token with R2 read/write access
-- [ ] Enable public access on the bucket (for serving badge images, avatars)
-- [ ] Add R2 env vars to Vercel: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `NEXT_PUBLIC_R2_PUBLIC_URL`
-
-### Upstash Redis (Rate Limiting) -- TODO (Phase 2 prerequisite)
-- [ ] Create Upstash Redis database at https://upstash.com
-- [ ] Add env vars to Vercel: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
-
-### Resend (Email) -- TODO (Phase 3 prerequisite)
-- [ ] Create Resend account at https://resend.com
-- [ ] Verify sending domain (once custom domain is set up)
-- [ ] Add env var to Vercel: `RESEND_API_KEY`
-
-### Sentry (Error Tracking) -- TODO (before launch)
-- [ ] Create Sentry project at https://sentry.io
-- [ ] Add env var to Vercel: `SENTRY_DSN`
-- [ ] Install `@sentry/nextjs` and configure
+- [ ] Cloudflare R2 bucket (for avatar uploads -- optional)
+- [ ] Resend (email -- Phase 3 prerequisite)
+- [ ] Sentry (error tracking -- before launch)
 
 ---
 
-## Phase 2: Auth + Profiles + GitHub Integration -- NOT STARTED
+## Phase 2: Auth + Profiles + GitHub Integration -- COMPLETE
 
-- [ ] Supabase project setup (local Docker + remote)
-- [ ] Supabase Auth: Google, GitHub, email/password sign-in
-- [ ] Auth middleware chain: rate limiter, auth check, RBAC, suspension check
-- [ ] 3-step onboarding wizard (name/avatar, GitHub link, pick interests)
-- [ ] User profile page (tabbed: overview, badges, contributions, CFPs, timeline)
-- [ ] Profile edit with React Hook Form + Zod validation
-- [ ] Avatar upload to Cloudflare R2 (presigned URLs, size/type validation)
-- [ ] GitHub contribution sync via GraphQL API (batched, rate-limit handling)
-- [ ] Contribution heatmap component (GitHub-style grid)
-- [ ] Notification system: DB table + bell icon + Supabase Realtime
-- [ ] Settings page (theme, email preferences, linked accounts)
+### Authentication
+- [x] Supabase project setup (remote Postgres, Auth, Realtime)
+- [x] Supabase Auth: Google, GitHub, email/password sign-in
+- [x] Auth middleware chain: Upstash rate limiter, session refresh, RBAC, suspension check
+- [x] JWT custom claims hook (is_suspended, onboarding_completed injected into token)
+- [x] RLS policies on all 14 tables
+- [x] Auth callback + email confirmation routes
+- [x] Login, signup, forgot-password, reset-password pages
+- [x] Suspended account page
+
+### Onboarding & Profiles
+- [x] 3-step onboarding wizard (name/avatar, GitHub link, pick interests)
+- [x] Onboarding auto-fills from OAuth provider data (GitHub username, avatar, name)
+- [x] User profile page (tabbed: overview, badges, contributions, timeline)
+- [x] Profile edit with React Hook Form + Zod validation
+- [x] Unified public profile at `/members/[username]`
+- [x] Level ring with animated arc around avatar
+- [x] Empty states for badges, contributions, and timeline sections
+
+### GitHub Integration
+- [x] GitHub contribution sync via GraphQL API (batched, rate-limit handling)
+- [x] Contribution heatmap component (GitHub-style grid)
+- [x] Cron endpoint for scheduled GitHub sync
+- [x] Manual sync button on profile contributions tab
+
+### Notifications & Settings
+- [x] Notification system: DB table + bell icon + Supabase Realtime (with polling fallback)
+- [x] Notifications page with mark-as-read and mark-all-as-read
+- [x] Settings page: email preferences (auto-saving toggles), linked accounts, change password
+- [x] Account deletion (soft delete with sign-out)
+
+### Infrastructure
+- [x] Upstash Redis for rate limiting
+- [x] Avatar upload API route (Cloudflare R2 -- optional, gracefully disabled when unconfigured)
+- [x] Custom ThemeProvider (React 19 compatible, replaced next-themes)
+- [x] @tanstack/react-query for client data fetching
+- [x] Drizzle ORM relations for all tables
+- [x] Global 404 page, error boundaries, loading states
 
 ---
 

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Clock, FileText } from "lucide-react";
+import { Clock, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { mockCfps, daysUntil, getCfpStatusBadge } from "./mock-data";
 
 export const revalidate = 3600;
 
@@ -10,40 +11,6 @@ export const metadata: Metadata = {
   title: "Call for Papers",
   description: "Submit your talk proposals to upcoming Kubeflow community events in India.",
 };
-
-const mockCfps = [
-  {
-    id: "1",
-    title: "KCD Bangalore 2026 - Call for Speakers",
-    description: "We're looking for speakers to share their experience with Kubeflow, MLOps, and cloud-native ML. All levels welcome.",
-    deadline: "2026-05-30T23:59:59",
-    topics: ["Kubeflow Pipelines", "Model Serving", "MLOps", "Platform Engineering"],
-    status: "open" as const,
-    eventTitle: "KCD Bangalore 2026",
-  },
-  {
-    id: "2",
-    title: "Community Webinar Series - Lightning Talks",
-    description: "10-minute lightning talks on any Kubeflow topic. Perfect for first-time speakers.",
-    deadline: "2026-06-15T23:59:59",
-    topics: ["Any Kubeflow Topic"],
-    status: "open" as const,
-    eventTitle: "Monthly Webinar Series",
-  },
-  {
-    id: "3",
-    title: "Delhi MLOps Meetup - July Edition",
-    description: "Looking for 2 speakers for 30-minute talks on MLOps in production.",
-    deadline: "2026-06-20T23:59:59",
-    topics: ["MLOps", "Production ML", "CI/CD for ML"],
-    status: "open" as const,
-    eventTitle: "Delhi MLOps Meetup",
-  },
-];
-
-function daysUntil(deadline: string): number {
-  return Math.max(0, Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-}
 
 export default function CfpsPage() {
   return (
@@ -60,6 +27,7 @@ export default function CfpsPage() {
       <div className="grid grid-cols-1 gap-6">
         {mockCfps.map((cfp) => {
           const days = daysUntil(cfp.deadline);
+          const statusBadge = getCfpStatusBadge(cfp.status);
           return (
             <div
               key={cfp.id}
@@ -68,11 +36,13 @@ export default function CfpsPage() {
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <Badge variant="success">Open</Badge>
-                    <span className="text-xs text-text-muted flex items-center gap-1">
-                      <Clock className="size-3" />
-                      {days} days left
-                    </span>
+                    <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+                    {cfp.status === "open" && (
+                      <span className="text-xs text-text-muted flex items-center gap-1">
+                        <Clock className="size-3" />
+                        {days} days left
+                      </span>
+                    )}
                   </div>
 
                   <h2 className="text-xl font-semibold mb-2">{cfp.title}</h2>
@@ -90,8 +60,8 @@ export default function CfpsPage() {
                 <div className="flex flex-col items-stretch md:items-end gap-2 md:min-w-[160px]">
                   <Button variant="gradient" size="sm" asChild>
                     <Link href={`/cfps/${cfp.id}`}>
-                      <FileText className="size-4" />
-                      Submit Proposal
+                      <ArrowRight className="size-4" />
+                      View Details
                     </Link>
                   </Button>
                   <span className="text-xs text-text-muted text-center md:text-right">
