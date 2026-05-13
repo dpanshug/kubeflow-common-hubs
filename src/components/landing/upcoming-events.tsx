@@ -4,45 +4,9 @@ import Link from "next/link";
 import { MapPin, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollReveal } from "./scroll-reveal";
+import { mockEvents, eventTypeVariant } from "@/app/(public)/events/mock-data";
 
-const events = [
-  {
-    title: "KCD Bangalore 2026",
-    date: "Jun 15",
-    month: "JUN",
-    day: "15",
-    location: "Bangalore",
-    type: "conference" as const,
-    attendees: 142,
-    slug: "kcd-bangalore-2026",
-  },
-  {
-    title: "Kubeflow Pipelines Workshop",
-    date: "Jun 22",
-    month: "JUN",
-    day: "22",
-    location: "Virtual",
-    type: "workshop" as const,
-    attendees: 58,
-    slug: "kubeflow-pipelines-workshop",
-  },
-  {
-    title: "Delhi MLOps Meetup",
-    date: "Jul 03",
-    month: "JUL",
-    day: "03",
-    location: "Delhi NCR",
-    type: "meetup" as const,
-    attendees: 34,
-    slug: "delhi-mlops-meetup",
-  },
-];
-
-const typeVariant: Record<string, "meetup" | "conference" | "workshop"> = {
-  meetup: "meetup",
-  conference: "conference",
-  workshop: "workshop",
-};
+const upcomingEvents = mockEvents.slice(0, 3);
 
 export function UpcomingEvents() {
   return (
@@ -68,54 +32,59 @@ export function UpcomingEvents() {
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {events.map((event, index) => (
-            <ScrollReveal key={event.slug} delay={index * 100}>
-              <Link href={`/events/${event.slug}`} className="group block">
-                <div className="rounded-xl border border-border bg-bg-secondary overflow-hidden transition-all duration-[var(--duration-base)] ease-[var(--ease-out)] group-hover:-translate-y-1 group-hover:shadow-lg group-hover:border-border-strong">
-                  {/* Banner placeholder with gradient */}
-                  <div className="relative h-40 bg-gradient-to-br from-bg-tertiary to-bg-secondary flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--kf-blue)]/5 to-[var(--kf-teal)]/5" />
+          {upcomingEvents.map((event, index) => {
+            const date = new Date(event.eventDate);
+            return (
+              <ScrollReveal key={event.slug} delay={index * 100}>
+                <Link href={`/events/${event.slug}`} className="group block">
+                  <div className="rounded-xl border border-border bg-bg-secondary overflow-hidden transition-all duration-[var(--duration-base)] ease-[var(--ease-out)] group-hover:-translate-y-1 group-hover:shadow-lg group-hover:border-border-strong">
+                    {/* Banner placeholder with gradient */}
+                    <div className="relative h-40 bg-gradient-to-br from-bg-tertiary to-bg-secondary flex items-center justify-center overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-[var(--kf-blue)]/5 to-[var(--kf-teal)]/5" />
 
-                    {/* Date chip */}
-                    <div className="absolute top-3 left-3 bg-bg-primary/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-center border border-border">
-                      <div className="text-[10px] uppercase tracking-wider font-medium text-[var(--kf-blue)]">
-                        {event.month}
+                      {/* Date chip */}
+                      <div className="absolute top-3 left-3 bg-bg-primary/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-center border border-border">
+                        <div className="text-[10px] uppercase tracking-wider font-medium text-[var(--kf-blue)]">
+                          {date.toLocaleDateString("en-IN", { month: "short" }).toUpperCase()}
+                        </div>
+                        <div className="text-lg font-bold leading-tight">
+                          {date.getDate()}
+                        </div>
                       </div>
-                      <div className="text-lg font-bold leading-tight">{event.day}</div>
+                    </div>
+
+                    <div className="p-5">
+                      <Badge variant={eventTypeVariant[event.type]} className="mb-3">
+                        {event.type}
+                      </Badge>
+                      <h3 className="font-semibold text-base mb-2 group-hover:text-[var(--kf-blue)] transition-colors">
+                        {event.title}
+                      </h3>
+                      <div className="flex items-center gap-1.5 text-sm text-text-muted">
+                        <MapPin className="size-3.5" />
+                        {event.city}
+                      </div>
+
+                      {/* Attendee count */}
+                      <div className="flex items-center mt-4 pt-4 border-t border-border">
+                        <div className="flex -space-x-2">
+                          {[...Array(3)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="size-7 rounded-full bg-bg-tertiary border-2 border-bg-secondary"
+                            />
+                          ))}
+                        </div>
+                        <span className="ml-2 text-xs text-text-muted">
+                          +{event.attendees} attending
+                        </span>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="p-5">
-                    <Badge variant={typeVariant[event.type] || "default"} className="mb-3">
-                      {event.type}
-                    </Badge>
-                    <h3 className="font-semibold text-base mb-2 group-hover:text-[var(--kf-blue)] transition-colors">
-                      {event.title}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-sm text-text-muted">
-                      <MapPin className="size-3.5" />
-                      {event.location}
-                    </div>
-
-                    {/* Attendee count */}
-                    <div className="flex items-center mt-4 pt-4 border-t border-border">
-                      <div className="flex -space-x-2">
-                        {[...Array(3)].map((_, i) => (
-                          <div
-                            key={i}
-                            className="size-7 rounded-full bg-bg-tertiary border-2 border-bg-secondary"
-                          />
-                        ))}
-                      </div>
-                      <span className="ml-2 text-xs text-text-muted">
-                        +{event.attendees} attending
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </ScrollReveal>
-          ))}
+                </Link>
+              </ScrollReveal>
+            );
+          })}
         </div>
 
         {/* Mobile "View all" link */}

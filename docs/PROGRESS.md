@@ -33,8 +33,11 @@
 
 ### Public Pages
 - [x] `/events` -- Event listing with type filters, date chips, attendee counts
+- [x] `/events/[slug]` -- Event detail page with info grid, RSVP link, description, related events
 - [x] `/news` -- News articles with tags, author, timestamps
-- [x] `/cfps` -- Open CFPs with deadline countdowns, topic tags, submit CTAs
+- [x] `/news/[slug]` -- News article detail page with author card, read time, related posts
+- [x] `/cfps` -- Open CFPs with deadline countdowns, topic tags, detail CTAs
+- [x] `/cfps/[id]` -- CFP detail page with guidelines, topics, "submission coming soon" placeholder
 - [x] `/badges` -- Badge catalog with tier indicators, earn counts, category filters
 - [x] `/leaderboard` -- Podium top 3, ranking table, trend arrows, Rising Stars
 - [x] `/members` -- Member directory with search, avatars, level, badge counts
@@ -56,7 +59,7 @@
 ### Code Quality
 - [x] 27 code review findings fixed (accessibility, performance, security)
 - [x] Zero lint errors, zero type errors, clean production build
-- [x] All 8 routes statically prerendered
+- [x] All 14 routes statically prerendered (8 list + 4 event + 3 news + 3 CFP detail pages)
 
 ---
 
