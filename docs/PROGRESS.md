@@ -129,16 +129,50 @@
 
 ---
 
-## Phase 3: CFP System -- NOT STARTED
+## Phase 3: CFP System -- COMPLETE
 
-- [ ] Multi-step CFP submission wizard (4 steps with progress bar)
-- [ ] CFP status tracker with visual pipeline
-- [ ] My Submissions dashboard with filters
-- [ ] Admin: CFP review interface with scoring, feedback, bulk actions
-- [ ] `cfp_reviews` table: multiple reviewers per submission
-- [ ] State machine enforcement in Server Actions (submitted -> in_review -> approved/rejected)
-- [ ] Email notifications via Supabase Edge Function (submission received, status changed)
-- [ ] Empty states with encouraging CTAs
+### Submission Flow
+- [x] 3-step CFP submission wizard (Title/Abstract/Type -> Outline/Bio -> Review/Submit)
+- [x] localStorage draft persistence across wizard steps
+- [x] Speaker bio pre-fill from user profile
+- [x] Talk type validation against CFP's accepted formats
+- [x] Duplicate submission prevention (unique constraint + server-side check)
+- [x] Deadline enforcement (server-side)
+- [x] Auth-aware CTA on CFP detail page (Sign in / Submit / View My Submission / Closed)
+
+### Speaker Dashboard
+- [x] `/submissions` -- My Submissions dashboard with status badges
+- [x] `/submissions/[id]` -- Submission detail with visual status pipeline tracker
+- [x] Admin feedback display when available
+- [x] Average rating display (when CFP finalized)
+
+### Admin Review Interface
+- [x] `/admin/cfps` -- CFP list with submission counts
+- [x] `/admin/cfps/[id]/submissions` -- Submission review list with status filter tabs
+- [x] `/admin/cfps/[id]/submissions/[subId]` -- Individual review with scoring form (1-5 stars)
+- [x] Status change controls with state machine enforcement
+- [x] Self-review prevention
+- [x] Written feedback + internal notes (not visible to speaker)
+- [x] Review history panel showing all reviewer scores
+
+### State Machine
+- [x] Enforced transitions: submitted -> in_review -> shortlisted/rejected -> approved/rejected/waitlisted
+- [x] In-app notifications on every status change
+- [x] Activity log entries for submissions and approvals
+- [x] `cfp_reviews` table: one review per reviewer per submission (upsert)
+- [x] Atomic avg_rating recalculation via SQL subquery
+
+### Infrastructure
+- [x] Zod validation schemas for all submission steps and admin actions
+- [x] RLS migration: unique constraint on (cfp_id, user_id), admin policies for cfp_submissions
+- [x] CFP data wired from DB (mock data removed)
+- [x] `/submissions` and `/admin` added to protected routes middleware
+- [x] `requireRole("moderator")` guards on all admin actions
+
+### Deferred
+- [ ] Email notifications (requires Resend setup -- infrastructure TODO)
+- [ ] Bulk status change UI (server action built, UI deferred to Phase 5 admin panel)
+- [ ] CFP CRUD admin form (create/edit via Supabase dashboard until Phase 5)
 
 ---
 

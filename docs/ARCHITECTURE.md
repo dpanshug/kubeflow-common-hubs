@@ -61,7 +61,10 @@ src/
 │   ├── (dashboard)/        # Authenticated pages
 │   │   ├── profile/        # /profile, /profile/edit
 │   │   ├── settings/       # /settings
-│   │   └── notifications/  # /notifications
+│   │   ├── notifications/  # /notifications
+│   │   ├── cfps/[id]/submit/ # /cfps/[id]/submit (3-step submission wizard)
+│   │   ├── submissions/    # /submissions, /submissions/[id]
+│   │   └── admin/cfps/     # /admin/cfps, /admin/cfps/[id]/submissions, .../[subId]
 │   ├── (auth)/             # Auth flows (centered layout)
 │   │   ├── login/          # /login
 │   │   ├── signup/         # /signup
@@ -90,9 +93,10 @@ src/
 │   ├── profile/            # actions.ts (profile CRUD, GitHub sync trigger)
 │   ├── settings/           # actions.ts (email prefs, password, OAuth linking)
 │   ├── notifications/      # actions.ts (CRUD for notifications)
+│   ├── cfp/                # actions.ts (submit, review, status), utils.ts
 │   ├── github/             # sync.ts (GraphQL contribution fetching)
 │   ├── r2/                 # client.ts (presigned URLs, validation)
-│   ├── validations/        # auth.ts, profile.ts (Zod schemas)
+│   ├── validations/        # auth.ts, profile.ts, cfp.ts (Zod schemas)
 │   ├── constants.ts        # Nav items, site config
 │   └── utils.ts            # cn() helper
 ├── db/

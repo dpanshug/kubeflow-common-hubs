@@ -1,25 +1,21 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Clock, ChevronRight, ArrowLeft, FileText, Info } from "lucide-react";
+import { Clock, ChevronRight, ArrowLeft, Send, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SITE_URL } from "@/lib/constants";
-import { mockCfps, getCfpById, daysUntil, getCfpStatusBadge } from "../mock-data";
-
-export const revalidate = 3600;
+import { SITE_URL, CFP_TALK_TYPES } from "@/lib/constants";
+import { getCfpById, getUserSubmissionForCfp } from "@/lib/cfp/actions";
+import { daysUntil, getCfpStatusBadge, isDeadlinePassed } from "@/lib/cfp/utils";
+import { createClient } from "@/lib/supabase/server";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export function generateStaticParams() {
-  return mockCfps.map((cfp) => ({ id: cfp.id }));
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const cfp = getCfpById(id);
+  const cfp = await getCfpById(id);
 
   if (!cfp) {
     return { title: "CFP Not Found" };
@@ -39,7 +35,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function CfpDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const cfp = getCfpById(id);
+  const cfp = await getCfpById(id);
 
   if (!cfp) {
     notFound();
@@ -47,6 +43,22 @@ export default async function CfpDetailPage({ params }: PageProps) {
 
   const days = daysUntil(cfp.deadline);
   const statusBadge = getCfpStatusBadge(cfp.status);
+  const deadlinePassed = isDeadlinePassed(cfp.deadline);
+  const canSubmit = cfp.status === "open" && !deadlinePassed;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let existingSubmission: { id: string } | null = null;
+  if (user) {
+    try {
+      existingSubmission = await getUserSubmissionForCfp(cfp.id);
+    } catch {
+      // not authenticated or error — fine
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -77,11 +89,14 @@ export default async function CfpDetailPage({ params }: PageProps) {
       <div className="mb-8">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
-          {cfp.status === "open" && (
+          {cfp.status === "open" && !deadlinePassed && (
             <span className="text-sm text-text-muted flex items-center gap-1.5">
               <Clock className="size-3.5" />
               {days} days left
             </span>
+          )}
+          {deadlinePassed && cfp.status === "open" && (
+            <Badge variant="destructive">Deadline Passed</Badge>
           )}
         </div>
 
@@ -94,12 +109,6 @@ export default async function CfpDetailPage({ params }: PageProps) {
       {/* Info grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div className="rounded-xl border border-border bg-bg-secondary p-5">
-          <p className="text-xs font-medium text-text-muted mb-2">
-            Associated Event
-          </p>
-          <p className="font-medium">{cfp.eventTitle}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-bg-secondary p-5">
           <p className="text-xs font-medium text-text-muted mb-2">Deadline</p>
           <p className="font-medium">
             {new Date(cfp.deadline).toLocaleDateString("en-IN", {
@@ -110,19 +119,25 @@ export default async function CfpDetailPage({ params }: PageProps) {
             })}
           </p>
         </div>
+        <div className="rounded-xl border border-border bg-bg-secondary p-5">
+          <p className="text-xs font-medium text-text-muted mb-2">Status</p>
+          <p className="font-medium capitalize">{cfp.status}</p>
+        </div>
       </div>
 
       {/* Topics */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">Topics</h2>
-        <div className="flex flex-wrap gap-2">
-          {cfp.topics.map((topic) => (
-            <Badge key={topic} variant="outline">
-              {topic}
-            </Badge>
-          ))}
+      {cfp.topics && cfp.topics.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">Topics</h2>
+          <div className="flex flex-wrap gap-2">
+            {cfp.topics.map((topic) => (
+              <Badge key={topic} variant="outline">
+                {topic}
+              </Badge>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Guidelines */}
       {cfp.guidelines && (
@@ -141,35 +156,48 @@ export default async function CfpDetailPage({ params }: PageProps) {
         <div className="mb-10">
           <h2 className="text-lg font-semibold mb-3">Accepted Formats</h2>
           <div className="flex flex-wrap gap-2">
-            {cfp.acceptedFormats.map((format) => (
-              <Badge key={format} variant="secondary">
-                {format.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-              </Badge>
-            ))}
+            {cfp.acceptedFormats.map((format) => {
+              const typeInfo = CFP_TALK_TYPES.find((t) => t.value === format);
+              return (
+                <Badge key={format} variant="secondary">
+                  {typeInfo?.label ?? format.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                </Badge>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Coming soon card */}
-      <div className="rounded-xl border-2 border-dashed border-border bg-bg-secondary p-8 text-center mb-8">
-        <div className="flex justify-center mb-4">
-          <div className="flex size-14 items-center justify-center rounded-full bg-[var(--kf-blue)]/10">
-            <FileText className="size-7 text-[var(--kf-blue)]" />
-          </div>
-        </div>
-        <h3 className="text-lg font-semibold mb-2">
-          Submission Form Coming Soon
-        </h3>
-        <p className="text-sm text-text-secondary max-w-md mx-auto mb-4">
-          We&apos;re building a streamlined submission experience. In the
-          meantime, you can prepare your talk proposal and abstract.
-        </p>
-        <div className="flex items-center justify-center gap-1.5 text-xs text-text-muted">
-          <Info className="size-3.5" />
-          <span>
-            The submission wizard will be available as part of our next update.
-          </span>
-        </div>
+      {/* Submit / Auth CTA */}
+      <div className="mb-8">
+        {existingSubmission ? (
+          <Button variant="outline" asChild>
+            <Link href={`/submissions/${existingSubmission.id}`}>
+              <Eye className="size-4" />
+              View My Submission
+            </Link>
+          </Button>
+        ) : canSubmit ? (
+          user ? (
+            <Button variant="gradient" asChild>
+              <Link href={`/cfps/${cfp.id}/submit`}>
+                <Send className="size-4" />
+                Submit Proposal
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="gradient" asChild>
+              <Link href={`/login?next=/cfps/${cfp.id}/submit`}>
+                <Send className="size-4" />
+                Sign in to Submit
+              </Link>
+            </Button>
+          )
+        ) : (
+          <Badge variant="secondary" className="text-sm px-4 py-2">
+            Submissions Closed
+          </Badge>
+        )}
       </div>
 
       {/* Back link */}
