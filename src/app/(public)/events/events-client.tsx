@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { MapPin, Calendar, Filter } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { eventTypeVariant, type MockEvent, type EventType } from "./mock-data";
+import { Filter } from "lucide-react";
+import { EventCard } from "@/components/events/event-card";
+import type { MockEvent, EventType } from "./mock-data";
 
 const EVENT_TYPES: EventType[] = ["meetup", "conference", "workshop", "hackathon", "webinar"];
 
@@ -61,54 +60,14 @@ export function EventsClient({ events }: { events: MockEvent[] }) {
             No events found for this type.
           </div>
         ) : (
-          filteredEvents.map((event) => {
-            const date = new Date(event.eventDate);
-            return (
-              <Link
-                key={event.id}
-                href={`/events/${event.slug}`}
-                className="group block rounded-xl border border-border bg-bg-secondary p-6 transition-all duration-[var(--duration-base)] ease-[var(--ease-out)] hover:-translate-y-1 hover:shadow-lg hover:border-border-strong"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <Badge variant={eventTypeVariant[event.type]}>
-                    {event.type}
-                  </Badge>
-                  <div className="text-right">
-                    <div className="text-xs uppercase tracking-wider font-medium text-[var(--kf-blue)]">
-                      {date.toLocaleDateString("en-IN", { month: "short" })}
-                    </div>
-                    <div className="text-lg font-bold leading-tight">
-                      {date.getDate()}
-                    </div>
-                  </div>
-                </div>
-
-                <h3 className="text-lg font-semibold mb-2 group-hover:text-[var(--kf-blue)] transition-colors">
-                  {event.title}
-                </h3>
-                <p className="text-sm text-text-secondary mb-4 line-clamp-2">
-                  {event.shortDescription}
-                </p>
-
-                <div className="flex items-center justify-between text-sm text-text-muted">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="size-3.5" />
-                    {event.location}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="size-3.5" />
-                    {date.toLocaleString("en-IN", {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                </div>
-              </Link>
-            );
-          })
+          filteredEvents.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              showFullLocation
+              showTime
+            />
+          ))
         )}
       </div>
     </div>

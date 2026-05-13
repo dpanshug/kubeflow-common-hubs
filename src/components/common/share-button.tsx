@@ -31,7 +31,7 @@ export function ShareButton() {
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={handleShare}>
+    <Button variant="outline" size="sm" onClick={handleShare} aria-live="polite">
       {state === "copied" ? (
         <>
           <Check className="size-4" />

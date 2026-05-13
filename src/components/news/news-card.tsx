@@ -3,11 +3,18 @@ import { Clock, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { MockNewsPost } from "@/app/(public)/news/mock-data";
 
-export function NewsCard({ post }: { post: MockNewsPost }) {
+interface NewsCardProps {
+  post: MockNewsPost;
+  featured?: boolean;
+}
+
+export function NewsCard({ post, featured = false }: NewsCardProps) {
   return (
     <Link
       href={`/news/${post.slug}`}
-      className="group block rounded-xl border border-border bg-bg-secondary p-6 transition-all duration-[var(--duration-base)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:shadow-lg hover:border-border-strong"
+      className={`group block rounded-xl border border-border bg-bg-secondary transition-all duration-[var(--duration-base)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:shadow-lg hover:border-border-strong ${
+        featured ? "p-6 md:p-8" : "p-6"
+      }`}
     >
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {post.tags.map((tag) => (
@@ -25,7 +32,11 @@ export function NewsCard({ post }: { post: MockNewsPost }) {
         </span>
       </div>
 
-      <h3 className="text-lg font-semibold mb-2 group-hover:text-[var(--kf-blue)] transition-colors">
+      <h3
+        className={`font-semibold mb-2 group-hover:text-[var(--kf-blue)] transition-colors ${
+          featured ? "text-xl md:text-2xl" : "text-lg"
+        }`}
+      >
         {post.title}
       </h3>
       <p className="text-sm text-text-secondary mb-4 line-clamp-2">

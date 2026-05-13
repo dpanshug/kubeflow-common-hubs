@@ -3,7 +3,17 @@ import { MapPin, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { eventTypeVariant, type MockEvent } from "@/app/(public)/events/mock-data";
 
-export function EventCard({ event }: { event: MockEvent }) {
+interface EventCardProps {
+  event: MockEvent;
+  showFullLocation?: boolean;
+  showTime?: boolean;
+}
+
+export function EventCard({
+  event,
+  showFullLocation = false,
+  showTime = false,
+}: EventCardProps) {
   const date = new Date(event.eventDate);
 
   return (
@@ -35,14 +45,15 @@ export function EventCard({ event }: { event: MockEvent }) {
       <div className="flex items-center justify-between text-sm text-text-muted">
         <div className="flex items-center gap-1.5">
           <MapPin className="size-3.5" />
-          {event.city}
+          {showFullLocation ? event.location : event.city}
         </div>
         <div className="flex items-center gap-1.5">
           <Calendar className="size-3.5" />
-          {date.toLocaleDateString("en-IN", {
+          {date.toLocaleString("en-IN", {
             weekday: "short",
             day: "numeric",
             month: "short",
+            ...(showTime && { hour: "2-digit", minute: "2-digit" }),
           })}
         </div>
       </div>
