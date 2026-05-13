@@ -33,7 +33,10 @@ function Logo({ overDark }: { overDark?: boolean }) {
   );
 }
 
-function UserMenu({ avatarUrl, name, username }: { avatarUrl?: string | null; name?: string; username?: string }) {
+const ADMIN_ROLES = new Set(["moderator", "admin", "superadmin"]);
+
+function UserMenu({ avatarUrl, name, username, role }: { avatarUrl?: string | null; name?: string; username?: string; role?: string }) {
+  const isAdmin = role ? ADMIN_ROLES.has(role) : false;
   const [open, setOpen] = useState(false);
   const initials = name?.split(" ").map((n) => n[0]).join("").slice(0, 2) || "?";
 
@@ -80,13 +83,15 @@ function UserMenu({ avatarUrl, name, username }: { avatarUrl?: string | null; na
             >
               <Settings className="size-4" /> Settings
             </Link>
-            <Link
-              href="/admin"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-text-secondary hover:bg-bg-tertiary transition-colors"
-            >
-              <Shield className="size-4" /> Admin Panel
-            </Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-text-secondary hover:bg-bg-tertiary transition-colors"
+              >
+                <Shield className="size-4" /> Admin Panel
+              </Link>
+            )}
             <div className="border-t border-border my-1" />
             <form action={signOut}>
               <button
@@ -200,6 +205,7 @@ export function Header() {
                     avatarUrl={user.user_metadata?.avatar_url}
                     name={user.user_metadata?.full_name || user.email}
                     username={user.user_metadata?.user_name || user.user_metadata?.preferred_username}
+                    role={user.app_metadata?.user_role}
                   />
                 </div>
               ) : (
@@ -293,13 +299,15 @@ export function Header() {
                 >
                   Notifications
                 </Link>
-                <Link
-                  href="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="px-4 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
-                >
-                  Admin Panel
-                </Link>
+                {user.app_metadata?.user_role && ADMIN_ROLES.has(user.app_metadata.user_role) && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="px-4 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+                  >
+                    Admin Panel
+                  </Link>
+                )}
               </>
             )}
 

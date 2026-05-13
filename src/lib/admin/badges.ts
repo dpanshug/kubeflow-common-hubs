@@ -134,15 +134,19 @@ export async function updateBadge(id: string, input: Partial<CreateBadgeInput>) 
   const parsedId = uuidSchema.safeParse(id);
   if (!parsedId.success) return { error: "Invalid badge ID" };
 
+  const parsed = createBadgeSchema.partial().safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+
+  const safe = parsed.data;
   const values: Record<string, unknown> = { updatedAt: new Date() };
-  if (input.name !== undefined) values.name = input.name;
-  if (input.description !== undefined) values.description = input.description;
-  if (input.imageUrl !== undefined) values.imageUrl = input.imageUrl || null;
-  if (input.criteriaDescription !== undefined) values.criteriaDescription = input.criteriaDescription || null;
-  if (input.category !== undefined) values.category = input.category;
-  if (input.tier !== undefined) values.tier = input.tier;
-  if (input.isAuto !== undefined) values.isAuto = input.isAuto;
-  if (input.pointsValue !== undefined) values.pointsValue = input.pointsValue;
+  if (safe.name !== undefined) values.name = safe.name;
+  if (safe.description !== undefined) values.description = safe.description;
+  if (safe.imageUrl !== undefined) values.imageUrl = safe.imageUrl || null;
+  if (safe.criteriaDescription !== undefined) values.criteriaDescription = safe.criteriaDescription || null;
+  if (safe.category !== undefined) values.category = safe.category;
+  if (safe.tier !== undefined) values.tier = safe.tier;
+  if (safe.isAuto !== undefined) values.isAuto = safe.isAuto;
+  if (safe.pointsValue !== undefined) values.pointsValue = safe.pointsValue;
 
   await db.update(badges).set(values).where(eq(badges.id, parsedId.data));
 

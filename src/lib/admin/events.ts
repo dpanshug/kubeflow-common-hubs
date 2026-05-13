@@ -180,26 +180,27 @@ export async function updateEvent(id: string, input: CreateEventInput) {
   const existing = await getEventById(parsedId.data);
   if (!existing) return { error: "Event not found" };
 
-  const slug = input.slug && input.slug !== existing.slug
-    ? await ensureUniqueSlug(input.slug, parsedId.data)
+  const data = parsed.data;
+  const slug = data.slug && data.slug !== existing.slug
+    ? await ensureUniqueSlug(data.slug, parsedId.data)
     : existing.slug;
 
   await db
     .update(events)
     .set({
-      title: input.title,
+      title: data.title,
       slug,
-      description: input.description,
-      shortDescription: input.shortDescription || null,
-      location: input.location || null,
-      city: input.city || null,
-      eventDate: new Date(input.eventDate),
-      eventEndDate: input.eventEndDate ? new Date(input.eventEndDate) : null,
-      type: input.type,
-      status: input.status,
-      bannerUrl: input.bannerUrl || null,
-      rsvpUrl: input.rsvpUrl || null,
-      maxAttendees: input.maxAttendees ?? null,
+      description: data.description,
+      shortDescription: data.shortDescription || null,
+      location: data.location || null,
+      city: data.city || null,
+      eventDate: new Date(data.eventDate),
+      eventEndDate: data.eventEndDate ? new Date(data.eventEndDate) : null,
+      type: data.type,
+      status: data.status,
+      bannerUrl: data.bannerUrl || null,
+      rsvpUrl: data.rsvpUrl || null,
+      maxAttendees: data.maxAttendees ?? null,
       updatedAt: new Date(),
     })
     .where(eq(events.id, parsedId.data));
@@ -209,7 +210,7 @@ export async function updateEvent(id: string, input: CreateEventInput) {
     action: "event.updated",
     targetType: "event",
     targetId: parsedId.data,
-    newValues: { title: input.title },
+    newValues: { title: data.title },
   });
 
   revalidatePath("/admin/events");
