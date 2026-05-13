@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Menu, X, Search, Sun, Moon, LogOut, Settings, User } from "lucide-react";
+import { Menu, X, Search, Sun, Moon, LogOut, Settings, User, Shield } from "lucide-react";
 import { useTheme } from "@/components/providers";
 import { NAV_LINKS, SITE_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -79,6 +79,13 @@ function UserMenu({ avatarUrl, name, username }: { avatarUrl?: string | null; na
               className="flex items-center gap-2 px-4 py-2 text-sm text-text-secondary hover:bg-bg-tertiary transition-colors"
             >
               <Settings className="size-4" /> Settings
+            </Link>
+            <Link
+              href="/admin"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-text-secondary hover:bg-bg-tertiary transition-colors"
+            >
+              <Shield className="size-4" /> Admin Panel
             </Link>
             <div className="border-t border-border my-1" />
             <form action={signOut}>
@@ -285,6 +292,13 @@ export function Header() {
                   className="px-4 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
                 >
                   Notifications
+                </Link>
+                <Link
+                  href="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+                >
+                  Admin Panel
                 </Link>
               </>
             )}
