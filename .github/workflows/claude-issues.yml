@@ -11,14 +11,15 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
   issues: write
   id-token: write
 
 jobs:
   claude-issue:
     name: Claude Issue Assistant
-    timeout-minutes: 15
+    timeout-minutes: 30
     if: |
       (github.event_name == 'issues' &&
        github.actor != 'github-actions[bot]') ||
@@ -35,6 +36,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure git identity
+        run: |
+          git config user.name "claude-issue-assistant[bot]"
+          git config user.email "claude-issue-assistant[bot]@users.noreply.github.com"
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
@@ -46,7 +60,7 @@ jobs:
           use_vertex: "true"
           track_progress: true
           display_report: "true"
-          claude_args: '--model claude-opus-4-6 --max-turns 30 --allowedTools "Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh issue view:*),Bash(gh label create:*),Read,Glob,Grep"'
+          claude_args: '--model claude-opus-4-6 --max-turns 50 --allowedTools "Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh issue view:*),Bash(gh label create:*),Bash(gh pr create:*),Bash(git checkout -b:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin claude/:*),Bash(git diff:*),Bash(git status:*),Bash(npm run build:*),Bash(npm run lint:*),Bash(npx tsc --noEmit:*),Read,Glob,Grep,Edit,Write"'
           prompt: |
             REPO: ${{ github.repository }}
             ISSUE NUMBER: ${{ github.event.issue.number }}
@@ -66,13 +80,32 @@ jobs:
             - Analyze bug reports: identify root cause, which files are involved, suggest a fix approach
             - Propose implementation plans for feature requests
             - Ask clarifying questions when the issue is unclear
+            - When asked to implement/develop/build/fix: create a branch, make changes,
+              validate with `npx tsc --noEmit && npm run lint && npm run build`,
+              push the branch, and open a pull request
 
-            ## What you CANNOT do
+            ## Implementing changes
 
-            - Do NOT create branches, push code, or open pull requests
-            - Do NOT edit any files
-            - Do NOT run npm, node, or any build/test commands
-            - You are READ-ONLY. Your job is to analyze and communicate, not to write code.
+            When a maintainer asks you to implement something (e.g. "@claude develop this",
+            "@claude fix this", "@claude implement this"):
+
+            1. Create a feature branch: `git checkout -b claude/issue-<NUMBER>-<short-slug>`
+            2. Read relevant files and make the changes using Edit/Write tools
+            3. Validate: `npx tsc --noEmit && npm run lint && npm run build`
+               - If validation fails, fix the issues and re-validate
+            4. Commit with a descriptive message:
+               ```
+               git add -u
+               git commit -m "feat: <description>
+
+               Closes #<ISSUE_NUMBER>"
+               ```
+            5. Push and open a PR (use the explicit branch name, not HEAD):
+               ```
+               git push origin claude/issue-<NUMBER>-<short-slug>
+               gh pr create --title "<title>" --body "<body with issue reference>" --base main
+               ```
+            6. Post a comment on the issue linking to the PR
 
             ## Step 1: Read the issue
 
