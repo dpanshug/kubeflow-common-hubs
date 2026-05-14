@@ -9,7 +9,6 @@ export async function getPublicNews() {
       title: newsPosts.title,
       slug: newsPosts.slug,
       excerpt: newsPosts.excerpt,
-      content: newsPosts.content,
       tags: newsPosts.tags,
       coverImageUrl: newsPosts.coverImageUrl,
       publishedAt: newsPosts.publishedAt,

@@ -17,7 +17,7 @@ export function useAuth() {
       setUser(user);
       setIsLoading(false);
       if (user) {
-        getCurrentUserRole().then(setUserRole);
+        getCurrentUserRole().then(setUserRole).catch(() => setUserRole(null));
       }
     }).catch(() => {
       setIsLoading(false);
@@ -29,7 +29,7 @@ export function useAuth() {
       setUser(session?.user ?? null);
       setIsLoading(false);
       if (session?.user) {
-        getCurrentUserRole().then(setUserRole);
+        getCurrentUserRole().then(setUserRole).catch(() => setUserRole(null));
       } else {
         setUserRole(null);
       }
