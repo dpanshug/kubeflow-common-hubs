@@ -16,8 +16,12 @@ import {
   Menu,
   X,
   ExternalLink,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/providers";
 
 interface NavItem {
   label: string;
@@ -60,6 +64,34 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
+const THEME_CYCLE = [
+  { value: "light" as const, label: "Light", icon: Sun },
+  { value: "dark" as const, label: "Dark", icon: Moon },
+  { value: "system" as const, label: "System", icon: Monitor },
+];
+
+function ThemeToggle({ collapsed }: { collapsed: boolean }) {
+  const { theme, setTheme } = useTheme();
+  const current = THEME_CYCLE.find((t) => t.value === theme) ?? THEME_CYCLE[1];
+  const nextIndex = (THEME_CYCLE.indexOf(current) + 1) % THEME_CYCLE.length;
+  const next = THEME_CYCLE[nextIndex];
+
+  return (
+    <button
+      onClick={() => setTheme(next.value)}
+      className={cn(
+        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-text-muted hover:bg-bg-tertiary hover:text-text-primary transition-colors",
+        collapsed && "justify-center px-2"
+      )}
+      title={collapsed ? `Theme: ${current.label}` : undefined}
+      aria-label={`Switch to ${next.label} theme`}
+    >
+      <current.icon className="size-[18px] shrink-0" />
+      {!collapsed && <span>{current.label}</span>}
+    </button>
+  );
+}
+
 function NavLink({
   item,
   collapsed,
@@ -82,8 +114,8 @@ function NavLink({
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         isActive
-          ? "bg-white/10 text-white"
-          : "text-white/60 hover:bg-white/5 hover:text-white/90",
+          ? "bg-bg-tertiary text-text-primary"
+          : "text-text-muted hover:bg-bg-tertiary/50 hover:text-text-primary",
         collapsed && "justify-center px-2"
       )}
       title={collapsed ? item.label : undefined}
@@ -128,7 +160,7 @@ export function AdminSidebar() {
       {/* Logo */}
       <div
         className={cn(
-          "flex h-16 items-center border-b border-white/10 px-4",
+          "flex h-16 items-center border-b border-border px-4",
           collapsed && "justify-center px-2"
         )}
       >
@@ -137,7 +169,7 @@ export function AdminSidebar() {
             <span className="text-white font-bold text-xs">KF</span>
           </div>
           {!collapsed && (
-            <span className="font-semibold text-white text-sm">Admin</span>
+            <span className="font-semibold text-text-primary text-sm">Admin</span>
           )}
         </Link>
       </div>
@@ -147,7 +179,7 @@ export function AdminSidebar() {
         {NAV_SECTIONS.map((section) => (
           <div key={section.title}>
             {!collapsed && (
-              <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/40">
+              <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
                 {section.title}
               </p>
             )}
@@ -165,12 +197,17 @@ export function AdminSidebar() {
         ))}
       </nav>
 
+      {/* Theme toggle */}
+      <div className="border-t border-border p-3">
+        <ThemeToggle collapsed={collapsed} />
+      </div>
+
       {/* Back to site */}
-      <div className="border-t border-white/10 p-3">
+      <div className="border-t border-border p-3">
         <Link
           href="/"
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/50 hover:bg-white/5 hover:text-white/80 transition-colors",
+            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-text-muted hover:bg-bg-tertiary/50 hover:text-text-primary transition-colors",
             collapsed && "justify-center px-2"
           )}
           title={collapsed ? "Back to Site" : undefined}
@@ -181,10 +218,10 @@ export function AdminSidebar() {
       </div>
 
       {/* Collapse toggle (desktop only) */}
-      <div className="hidden md:block border-t border-white/10 p-3">
+      <div className="hidden md:block border-t border-border p-3">
         <button
           onClick={toggleCollapse}
-          className="flex w-full items-center justify-center rounded-lg p-2 text-white/50 hover:bg-white/5 hover:text-white/80 transition-colors"
+          className="flex w-full items-center justify-center rounded-lg p-2 text-text-muted hover:bg-bg-tertiary/50 hover:text-text-primary transition-colors"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
@@ -202,7 +239,7 @@ export function AdminSidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 md:hidden rounded-lg bg-[#0f1a33] p-2 text-white/70 hover:text-white shadow-lg border border-white/10"
+        className="fixed top-4 left-4 z-50 md:hidden rounded-lg bg-bg-secondary p-2 text-text-muted hover:text-text-primary shadow-lg border border-border"
         aria-label="Open admin menu"
       >
         <Menu className="size-5" />
@@ -215,12 +252,12 @@ export function AdminSidebar() {
           onClick={() => setMobileOpen(false)}
         >
           <aside
-            className="h-full w-64 bg-[#0a1228]"
+            className="h-full w-64 bg-bg-primary"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-4 text-white/60 hover:text-white"
+              className="absolute top-4 right-4 text-text-muted hover:text-text-primary"
               aria-label="Close admin menu"
             >
               <X className="size-5" />
@@ -233,7 +270,7 @@ export function AdminSidebar() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden md:flex flex-col bg-[#0a1228] border-r border-white/10 transition-all duration-200",
+          "hidden md:flex flex-col bg-bg-primary border-r border-border transition-all duration-200",
           collapsed ? "w-16" : "w-60"
         )}
       >
