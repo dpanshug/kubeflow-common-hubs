@@ -7,9 +7,6 @@ export const NAV_LINKS = [
   { label: "Events", href: "/events" },
   { label: "News", href: "/news" },
   { label: "CFPs", href: "/cfps" },
-  { label: "Badges", href: "/badges" },
-  { label: "Leaderboard", href: "/leaderboard" },
-  { label: "Members", href: "/members" },
 ] as const;
 
 export const POINT_VALUES = {

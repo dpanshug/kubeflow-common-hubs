@@ -5,12 +5,9 @@ const footerLinks = {
   Community: [
     { label: "Events", href: "/events" },
     { label: "News", href: "/news" },
-    { label: "Members", href: "/members" },
-    { label: "Leaderboard", href: "/leaderboard" },
+    { label: "Open CFPs", href: "/cfps" },
   ],
   Contribute: [
-    { label: "Open CFPs", href: "/cfps" },
-    { label: "Badges", href: "/badges" },
     { label: "GitHub", href: "https://github.com/kubeflow", external: true },
     { label: "Good First Issues", href: "https://github.com/kubeflow/kubeflow/labels/good%20first%20issue", external: true },
   ],

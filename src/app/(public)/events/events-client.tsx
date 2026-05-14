@@ -3,11 +3,22 @@
 import { useState } from "react";
 import { Filter } from "lucide-react";
 import { EventCard } from "@/components/events/event-card";
-import type { MockEvent, EventType } from "./mock-data";
+
+type EventType = "meetup" | "conference" | "workshop" | "hackathon" | "webinar";
 
 const EVENT_TYPES: EventType[] = ["meetup", "conference", "workshop", "hackathon", "webinar"];
 
-export function EventsClient({ events }: { events: MockEvent[] }) {
+interface EventRow {
+  slug: string;
+  title: string;
+  shortDescription: string | null;
+  location: string | null;
+  city: string | null;
+  eventDate: Date;
+  type: string;
+}
+
+export function EventsClient({ events }: { events: EventRow[] }) {
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   const filteredEvents = activeFilter
@@ -57,12 +68,12 @@ export function EventsClient({ events }: { events: MockEvent[] }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredEvents.length === 0 ? (
           <div className="col-span-full text-center py-12 text-text-muted">
-            No events found for this type.
+            No events found{activeFilter ? ` for "${activeFilter}"` : ""}.
           </div>
         ) : (
           filteredEvents.map((event) => (
             <EventCard
-              key={event.id}
+              key={event.slug}
               event={event}
               showFullLocation
               showTime

@@ -1,10 +1,29 @@
 import Link from "next/link";
 import { MapPin, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { eventTypeVariant, type MockEvent } from "@/app/(public)/events/mock-data";
+
+type EventType = "meetup" | "conference" | "workshop" | "hackathon" | "webinar";
+
+const EVENT_TYPE_VARIANT: Record<EventType, EventType> = {
+  meetup: "meetup",
+  conference: "conference",
+  workshop: "workshop",
+  webinar: "webinar",
+  hackathon: "hackathon",
+};
+
+interface EventCardEvent {
+  slug: string;
+  title: string;
+  shortDescription: string | null;
+  location: string | null;
+  city: string | null;
+  eventDate: Date;
+  type: string;
+}
 
 interface EventCardProps {
-  event: MockEvent;
+  event: EventCardEvent;
   showFullLocation?: boolean;
   showTime?: boolean;
 }
@@ -15,6 +34,7 @@ export function EventCard({
   showTime = false,
 }: EventCardProps) {
   const date = new Date(event.eventDate);
+  const type = event.type as EventType;
 
   return (
     <Link
@@ -22,7 +42,7 @@ export function EventCard({
       className="group block rounded-xl border border-border bg-bg-secondary p-6 transition-all duration-[var(--duration-base)] ease-[var(--ease-out)] hover:-translate-y-1 hover:shadow-lg hover:border-border-strong"
     >
       <div className="flex items-start justify-between mb-4">
-        <Badge variant={eventTypeVariant[event.type]}>
+        <Badge variant={EVENT_TYPE_VARIANT[type] || "secondary"}>
           {event.type}
         </Badge>
         <div className="text-right">
@@ -39,13 +59,13 @@ export function EventCard({
         {event.title}
       </h3>
       <p className="text-sm text-text-secondary mb-4 line-clamp-2">
-        {event.shortDescription}
+        {event.shortDescription || ""}
       </p>
 
       <div className="flex items-center justify-between text-sm text-text-muted">
         <div className="flex items-center gap-1.5">
           <MapPin className="size-3.5" />
-          {showFullLocation ? event.location : event.city}
+          {showFullLocation ? (event.location || event.city || "TBD") : (event.city || "TBD")}
         </div>
         <div className="flex items-center gap-1.5">
           <Calendar className="size-3.5" />

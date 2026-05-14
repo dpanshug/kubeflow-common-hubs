@@ -112,7 +112,7 @@ export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { user, isLoading } = useAuth();
+  const { user, userRole, isLoading } = useAuth();
 
   const { theme, setTheme } = useTheme();
   const isHome = pathname === "/";
@@ -205,7 +205,7 @@ export function Header() {
                     avatarUrl={user.user_metadata?.avatar_url}
                     name={user.user_metadata?.full_name || user.email}
                     username={user.user_metadata?.user_name || user.user_metadata?.preferred_username}
-                    role={user.app_metadata?.user_role}
+                    role={userRole ?? undefined}
                   />
                 </div>
               ) : (
@@ -299,7 +299,7 @@ export function Header() {
                 >
                   Notifications
                 </Link>
-                {user.app_metadata?.user_role && ADMIN_ROLES.has(user.app_metadata.user_role) && (
+                {userRole && ADMIN_ROLES.has(userRole as string) && (
                   <Link
                     href="/admin"
                     onClick={() => setMobileMenuOpen(false)}
