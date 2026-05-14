@@ -205,7 +205,7 @@ export function Header() {
                     avatarUrl={user.user_metadata?.avatar_url}
                     name={user.user_metadata?.full_name || user.email}
                     username={user.user_metadata?.user_name || user.user_metadata?.preferred_username}
-                    role={userRole}
+                    role={userRole ?? undefined}
                   />
                 </div>
               ) : (
@@ -299,7 +299,7 @@ export function Header() {
                 >
                   Notifications
                 </Link>
-                {userRole && ADMIN_ROLES.has(userRole) && (
+                {userRole && ADMIN_ROLES.has(userRole as string) && (
                   <Link
                     href="/admin"
                     onClick={() => setMobileMenuOpen(false)}
