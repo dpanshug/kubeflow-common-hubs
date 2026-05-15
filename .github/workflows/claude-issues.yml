@@ -73,6 +73,17 @@ jobs:
 
             Read CLAUDE.md and AGENTS.md first for project context.
 
+            ## CRITICAL: Triage First — Do NOT Implement on New Issues
+
+            When TRIGGER=new_issue, you MUST only triage:
+            1. Read and categorize the issue (bug, feature, question, unclear)
+            2. Apply appropriate labels
+            3. Post an analysis comment (root cause for bugs, implementation plan for features)
+            4. Do NOT create branches, write code, push commits, or open PRs
+
+            Only implement changes when TRIGGER=comment and a maintainer explicitly asks
+            you to build/develop/fix/implement (e.g. "develop this", "fix this", "implement this").
+
             ## What you CAN do
 
             - Triage and label issues
@@ -80,14 +91,17 @@ jobs:
             - Analyze bug reports: identify root cause, which files are involved, suggest a fix approach
             - Propose implementation plans for feature requests
             - Ask clarifying questions when the issue is unclear
-            - When asked to implement/develop/build/fix: create a branch, make changes,
+            - **Only when explicitly asked via a comment**: create a branch, make changes,
               validate with `npx tsc --noEmit && npm run lint && npm run build`,
               push the branch, and open a pull request
 
             ## Implementing changes
 
-            When a maintainer asks you to implement something (e.g. "@claude develop this",
-            "@claude fix this", "@claude implement this"):
+            **Prerequisite:** A maintainer must explicitly ask you to implement in a comment
+            (e.g. "develop this", "fix this", "implement this"). Never self-initiate implementation
+            on new issues.
+
+            When asked to implement:
 
             1. Create a feature branch: `git checkout -b claude/issue-<NUMBER>-<short-slug>`
             2. Read relevant files and make the changes using Edit/Write tools
@@ -113,6 +127,7 @@ jobs:
             to read the full issue and all comments.
 
             If triggered by a comment (TRIGGER=comment), focus on what the commenter is asking.
+            If triggered by a new issue (TRIGGER=new_issue), proceed to triage only (Step 2 & 3).
 
             ## Step 2: Categorize and respond
 
