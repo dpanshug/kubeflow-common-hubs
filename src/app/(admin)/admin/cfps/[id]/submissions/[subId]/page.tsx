@@ -67,7 +67,8 @@ export default async function AdminReviewPage({ params }: PageProps) {
           {submission.title}
         </h1>
         <p className="text-sm text-text-muted">
-          by {submission.speakerName} ({submission.speakerEmail})
+          by {submission.speakerName ?? submission.guestName ?? "Unknown"} ({submission.speakerEmail ?? submission.guestEmail ?? "N/A"})
+          {!submission.userId && <span className="ml-1 text-xs text-amber-400">(guest)</span>}
         </p>
       </div>
 

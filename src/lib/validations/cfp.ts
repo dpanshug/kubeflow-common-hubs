@@ -33,6 +33,23 @@ export const cfpSubmissionFullSchema = cfpSubmissionStep1Schema.merge(
   cfpSubmissionStep2Schema
 );
 
+export const cfpGuestInfoSchema = z.object({
+  speakerName: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters")
+    .transform((v) => v.trim()),
+  speakerEmail: z
+    .string()
+    .email("Please enter a valid email address")
+    .max(254, "Email must be less than 254 characters")
+    .transform((v) => v.trim().toLowerCase()),
+});
+
+export const cfpGuestSubmissionFullSchema = cfpSubmissionFullSchema.merge(
+  cfpGuestInfoSchema
+);
+
 export const cfpReviewSchema = z.object({
   rating: z
     .number()
@@ -87,3 +104,5 @@ export type CfpSubmissionStep2Input = z.infer<typeof cfpSubmissionStep2Schema>;
 export type CfpSubmissionFullInput = z.infer<typeof cfpSubmissionFullSchema>;
 export type CfpReviewInput = z.infer<typeof cfpReviewSchema>;
 export type CfpStatusChangeInput = z.infer<typeof cfpStatusChangeSchema>;
+export type CfpGuestInfoInput = z.infer<typeof cfpGuestInfoSchema>;
+export type CfpGuestSubmissionFullInput = z.infer<typeof cfpGuestSubmissionFullSchema>;

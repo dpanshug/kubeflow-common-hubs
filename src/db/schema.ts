@@ -230,9 +230,9 @@ export const cfpSubmissions = pgTable(
     cfpId: uuid("cfp_id")
       .references(() => cfps.id, { onDelete: "cascade" })
       .notNull(),
-    userId: uuid("user_id")
-      .references(() => users.id, { onDelete: "cascade" })
-      .notNull(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    guestName: text("guest_name"),
+    guestEmail: text("guest_email"),
     title: text("title").notNull(),
     abstract: text("abstract").notNull(),
     outline: text("outline"),

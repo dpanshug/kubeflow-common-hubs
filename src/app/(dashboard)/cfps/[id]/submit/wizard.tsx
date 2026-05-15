@@ -2,6 +2,7 @@
 
 import { useState, useReducer, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Check,
   ArrowRight,
@@ -10,9 +11,12 @@ import {
   Clock,
   Edit3,
   CheckCircle2,
+  LogIn,
+  Mail,
+  User,
 } from "lucide-react";
 import { CFP_TALK_TYPES } from "@/lib/constants";
-import { submitCfpProposal } from "@/lib/cfp/actions";
+import { submitCfpProposal, submitGuestCfpProposal } from "@/lib/cfp/actions";
 
 interface WizardProps {
   cfpId: string;
@@ -20,6 +24,7 @@ interface WizardProps {
   cfpDeadline: string;
   acceptedFormats: string[];
   defaultSpeakerBio: string;
+  isGuest?: boolean;
 }
 
 type WizardState = {
@@ -38,7 +43,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     case "NEXT":
       return { step: state.step + 1, returnTo: null };
     case "BACK":
-      return { step: state.step - 1, returnTo: null };
+      return { step: Math.max(0, state.step - 1), returnTo: null };
     case "JUMP":
       return { step: action.step, returnTo: action.returnTo };
     case "RETURN":
@@ -50,7 +55,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 
 const STEPS = [
   { id: 1, label: "Talk Details" },
-  { id: 2, label: "Bio & Outline" },
+  { id: 2, label: "Speaker Info" },
   { id: 3, label: "Review" },
 ] as const;
 
@@ -62,6 +67,8 @@ interface WizardFormValues {
   talkType: string;
   outline: string;
   speakerBio: string;
+  speakerName: string;
+  speakerEmail: string;
 }
 
 function loadDraft(cfpId: string): Partial<WizardFormValues> {
@@ -131,10 +138,11 @@ export function SubmissionWizard({
   cfpDeadline,
   acceptedFormats,
   defaultSpeakerBio,
+  isGuest = false,
 }: WizardProps) {
   const router = useRouter();
   const [state, dispatch] = useReducer(wizardReducer, {
-    step: 1,
+    step: isGuest ? 0 : 1,
     returnTo: null,
   });
   const [isPending, startTransition] = useTransition();
@@ -150,6 +158,8 @@ export function SubmissionWizard({
       talkType: draft.talkType ?? (acceptedFormats.length === 1 ? acceptedFormats[0] : ""),
       outline: draft.outline ?? "",
       speakerBio: draft.speakerBio ?? defaultSpeakerBio,
+      speakerName: draft.speakerName ?? "",
+      speakerEmail: draft.speakerEmail ?? "",
     };
   });
 
@@ -176,6 +186,14 @@ export function SubmissionWizard({
     )
   );
 
+  function validateStep0(): string | null {
+    if (formValues.speakerName.trim().length < 2) return "Name must be at least 2 characters";
+    if (formValues.speakerName.trim().length > 100) return "Name must be less than 100 characters";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formValues.speakerEmail.trim())) return "Please enter a valid email address";
+    return null;
+  }
+
   function validateStep1(): string | null {
     if (formValues.title.trim().length < 5) return "Title must be at least 5 characters";
     if (formValues.title.trim().length > 100) return "Title must be less than 100 characters";
@@ -194,6 +212,10 @@ export function SubmissionWizard({
 
   function handleNext() {
     setError(null);
+    if (state.step === 0) {
+      const err = validateStep0();
+      if (err) { setError(err); return; }
+    }
     if (state.step === 1) {
       const err = validateStep1();
       if (err) { setError(err); return; }
@@ -219,7 +241,15 @@ export function SubmissionWizard({
       fd.set("outline", formValues.outline.trim());
       fd.set("speakerBio", formValues.speakerBio.trim());
 
-      const result = await submitCfpProposal(cfpId, fd);
+      let result;
+      if (isGuest) {
+        fd.set("speakerName", formValues.speakerName.trim());
+        fd.set("speakerEmail", formValues.speakerEmail.trim());
+        result = await submitGuestCfpProposal(cfpId, fd);
+      } else {
+        result = await submitCfpProposal(cfpId, fd);
+      }
+
       if (result.error) {
         setError(result.error);
       } else {
@@ -244,7 +274,10 @@ export function SubmissionWizard({
         <h2 className="text-xl font-bold mb-2">Proposal Submitted!</h2>
         <p className="text-sm text-text-secondary mb-6 max-w-md mx-auto">
           Your proposal &quot;{formValues.title}&quot; has been submitted to{" "}
-          {cfpTitle}. You&apos;ll be notified when the status changes.
+          {cfpTitle}.
+          {isGuest
+            ? " We've recorded your email for future correspondence."
+            : " You’ll be notified when the status changes."}
         </p>
         <div className="flex justify-center gap-3">
           <button
@@ -254,15 +287,17 @@ export function SubmissionWizard({
           >
             Back to CFP
           </button>
-          <button
-            type="button"
-            onClick={() =>
-              router.push(submissionId ? `/submissions/${submissionId}` : "/submissions")
-            }
-            className="px-4 py-2.5 rounded-lg bg-[var(--kf-blue)] text-white text-sm font-medium hover:bg-[var(--kf-blue)]/90 transition-colors"
-          >
-            View My Submissions
-          </button>
+          {!isGuest && (
+            <button
+              type="button"
+              onClick={() =>
+                router.push(submissionId ? `/submissions/${submissionId}` : "/submissions")
+              }
+              className="px-4 py-2.5 rounded-lg bg-[var(--kf-blue)] text-white text-sm font-medium hover:bg-[var(--kf-blue)]/90 transition-colors"
+            >
+              View My Submissions
+            </button>
+          )}
         </div>
       </div>
     );
@@ -282,11 +317,108 @@ export function SubmissionWizard({
       </div>
       <p className="text-sm text-text-secondary mb-6">{cfpTitle}</p>
 
-      <ProgressBar currentStep={state.step} />
+      {state.step > 0 && <ProgressBar currentStep={state.step} />}
 
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
           {error}
+        </div>
+      )}
+
+      {/* Step 0: Identity gate (guests only) */}
+      {state.step === 0 && (
+        <div className="space-y-6">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold text-text-primary mb-1">
+              Before you begin
+            </h2>
+            <p className="text-sm text-text-secondary">
+              Sign in for a better experience, or continue as a guest.
+            </p>
+          </div>
+
+          <Link
+            href={`/login?next=/cfps/${cfpId}/submit`}
+            aria-label="Sign in to submit your proposal"
+            className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-[var(--kf-blue)]/40 hover:bg-[var(--kf-blue)]/5 transition-all group"
+          >
+            <div className="flex size-10 items-center justify-center rounded-full bg-[var(--kf-blue)]/10 text-[var(--kf-blue)] group-hover:bg-[var(--kf-blue)]/20 transition-colors">
+              <LogIn className="size-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-text-primary">Sign In</p>
+              <p className="text-xs text-text-muted">
+                Track your submission, get in-app notifications, and auto-fill your profile.
+              </p>
+            </div>
+            <ArrowRight className="size-4 text-text-muted group-hover:text-[var(--kf-blue)] transition-colors" />
+          </Link>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-bg-secondary px-3 text-xs text-text-muted">
+                or continue as guest
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="speakerName"
+                className="block text-sm font-medium text-text-secondary mb-1.5"
+              >
+                <span className="flex items-center gap-1.5">
+                  <User className="size-3.5" />
+                  Your Name <span className="text-red-400">*</span>
+                </span>
+              </label>
+              <input
+                id="speakerName"
+                type="text"
+                value={formValues.speakerName}
+                onChange={(e) => updateField("speakerName", e.target.value)}
+                maxLength={100}
+                className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg-primary text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-[var(--kf-blue)]/50 focus:border-transparent transition-all"
+                placeholder="Jane Doe"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="speakerEmail"
+                className="block text-sm font-medium text-text-secondary mb-1.5"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Mail className="size-3.5" />
+                  Email Address <span className="text-red-400">*</span>
+                </span>
+              </label>
+              <input
+                id="speakerEmail"
+                type="email"
+                value={formValues.speakerEmail}
+                onChange={(e) => updateField("speakerEmail", e.target.value)}
+                maxLength={254}
+                className="w-full px-4 py-2.5 rounded-lg border border-border bg-bg-primary text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-[var(--kf-blue)]/50 focus:border-transparent transition-all"
+                placeholder="jane@example.com"
+              />
+              <p className="mt-1 text-xs text-text-muted">
+                We&apos;ll use this to contact you about your submission.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[var(--kf-blue)] text-white text-sm font-medium hover:bg-[var(--kf-blue)]/90 transition-colors"
+            >
+              Continue as Guest <ArrowRight className="size-4" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -383,22 +515,41 @@ export function SubmissionWizard({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleNext}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[var(--kf-blue)] text-white text-sm font-medium hover:bg-[var(--kf-blue)]/90 transition-colors mt-4"
-          >
-            Continue <ArrowRight className="size-4" />
-          </button>
+          {isGuest ? (
+            <div className="flex gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => dispatch({ type: "BACK" })}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-medium text-text-secondary hover:bg-bg-tertiary transition-colors"
+              >
+                <ArrowLeft className="size-4" /> Back
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[var(--kf-blue)] text-white text-sm font-medium hover:bg-[var(--kf-blue)]/90 transition-colors"
+              >
+                Continue <ArrowRight className="size-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-[var(--kf-blue)] text-white text-sm font-medium hover:bg-[var(--kf-blue)]/90 transition-colors mt-4"
+            >
+              Continue <ArrowRight className="size-4" />
+            </button>
+          )}
         </div>
       )}
 
-      {/* Step 2: Outline & Speaker Bio */}
+      {/* Step 2: Speaker Info, Bio & Outline */}
       {state.step === 2 && (
         <div className="space-y-4">
           <div>
             <h2 className="text-lg font-semibold text-text-primary mb-1">
-              Bio & Outline
+              Speaker Info
             </h2>
             <p className="text-sm text-text-secondary">
               Help reviewers learn about you and your talk structure.
@@ -481,6 +632,24 @@ export function SubmissionWizard({
           </div>
 
           <div className="space-y-3">
+            {isGuest && (
+              <>
+                <ReviewSection
+                  label="Speaker Name"
+                  value={formValues.speakerName}
+                  onEdit={() =>
+                    dispatch({ type: "JUMP", step: 0, returnTo: 3 })
+                  }
+                />
+                <ReviewSection
+                  label="Email Address"
+                  value={formValues.speakerEmail}
+                  onEdit={() =>
+                    dispatch({ type: "JUMP", step: 0, returnTo: 3 })
+                  }
+                />
+              </>
+            )}
             <ReviewSection
               label="Talk Title"
               value={formValues.title}

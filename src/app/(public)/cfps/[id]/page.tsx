@@ -178,21 +178,12 @@ export default async function CfpDetailPage({ params }: PageProps) {
             </Link>
           </Button>
         ) : canSubmit ? (
-          user ? (
-            <Button variant="gradient" asChild>
-              <Link href={`/cfps/${cfp.id}/submit`}>
-                <Send className="size-4" />
-                Submit Proposal
-              </Link>
-            </Button>
-          ) : (
-            <Button variant="gradient" asChild>
-              <Link href={`/login?next=/cfps/${cfp.id}/submit`}>
-                <Send className="size-4" />
-                Sign in to Submit
-              </Link>
-            </Button>
-          )
+          <Button variant="gradient" asChild>
+            <Link href={`/cfps/${cfp.id}/submit`}>
+              <Send className="size-4" />
+              Submit Proposal
+            </Link>
+          </Button>
         ) : (
           <Badge variant="secondary" className="text-sm px-4 py-2">
             Submissions Closed

@@ -115,7 +115,8 @@ export default async function AdminSubmissionsPage({
                     </div>
                     <h3 className="font-semibold mb-1 truncate">{sub.title}</h3>
                     <p className="text-xs text-text-muted">
-                      by {sub.speakerName}
+                      by {sub.speakerName ?? sub.guestName ?? "Unknown"}
+                      {!sub.userId && <span className="ml-1 text-amber-400">(guest)</span>}
                     </p>
                   </div>
                   <div className="text-xs text-text-muted shrink-0">

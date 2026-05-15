@@ -15,6 +15,7 @@ import {
 import { requireAuth, requireRole } from "@/lib/auth/guards";
 import {
   cfpSubmissionFullSchema,
+  cfpGuestSubmissionFullSchema,
   cfpReviewSchema,
   isValidTransition,
   getValidTransitions,
@@ -122,6 +123,90 @@ export async function submitCfpProposal(
   });
 
   revalidatePath("/submissions");
+  revalidatePath(`/cfps/${cfpId}`);
+
+  return { success: true, data: { submissionId: submission.id } };
+}
+
+export async function submitGuestCfpProposal(
+  cfpId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  if (!isValidUuid(cfpId)) {
+    return { error: "Invalid CFP ID" };
+  }
+
+  const cfp = await db
+    .select()
+    .from(cfps)
+    .where(eq(cfps.id, cfpId))
+    .limit(1);
+
+  if (!cfp[0]) {
+    return { error: "CFP not found" };
+  }
+
+  if (cfp[0].status !== "open") {
+    return { error: "This CFP is no longer accepting submissions" };
+  }
+
+  if (isDeadlinePassed(cfp[0].deadline)) {
+    return { error: "The submission deadline has passed" };
+  }
+
+  const raw = {
+    title: formData.get("title") as string,
+    abstract: formData.get("abstract") as string,
+    talkType: formData.get("talkType") as string,
+    outline: formData.get("outline") as string,
+    speakerBio: formData.get("speakerBio") as string,
+    speakerName: formData.get("speakerName") as string,
+    speakerEmail: formData.get("speakerEmail") as string,
+  };
+
+  const parsed = cfpGuestSubmissionFullSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const existing = await db
+    .select({ id: cfpSubmissions.id })
+    .from(cfpSubmissions)
+    .where(
+      and(
+        eq(cfpSubmissions.cfpId, cfpId),
+        eq(cfpSubmissions.guestEmail, parsed.data.speakerEmail)
+      )
+    )
+    .limit(1);
+
+  if (existing[0]) {
+    return { error: "A proposal with this email has already been submitted to this CFP" };
+  }
+
+  if (
+    cfp[0].acceptedFormats &&
+    cfp[0].acceptedFormats.length > 0 &&
+    !cfp[0].acceptedFormats.includes(parsed.data.talkType)
+  ) {
+    return { error: "Selected talk type is not accepted for this CFP" };
+  }
+
+  const [submission] = await db
+    .insert(cfpSubmissions)
+    .values({
+      cfpId,
+      userId: null,
+      guestName: parsed.data.speakerName,
+      guestEmail: parsed.data.speakerEmail,
+      title: parsed.data.title,
+      abstract: parsed.data.abstract,
+      talkType: parsed.data.talkType as "talk_30" | "talk_45" | "lightning_10" | "workshop" | "panel",
+      outline: parsed.data.outline || null,
+      speakerBio: parsed.data.speakerBio,
+    })
+    .returning({ id: cfpSubmissions.id });
+
   revalidatePath(`/cfps/${cfpId}`);
 
   return { success: true, data: { submissionId: submission.id } };
@@ -284,21 +369,23 @@ export async function updateSubmissionStatus(
     waitlisted: "has been waitlisted",
   };
 
-  await db.insert(notifications).values({
-    userId: submission.userId,
-    type: "cfp_status_changed",
-    title: `Proposal ${newStatus === "approved" ? "Approved!" : "Updated"}`,
-    message: `Your proposal "${submission.title}" for ${submission.cfpTitle} ${statusLabels[newStatus] || "status changed"}.`,
-    link: `/submissions/${submissionId}`,
-  });
-
-  if (newStatus === "approved") {
-    await db.insert(activityLog).values({
+  if (submission.userId) {
+    await db.insert(notifications).values({
       userId: submission.userId,
-      actionType: "cfp_approved",
-      description: `Talk "${submission.title}" approved for ${submission.cfpTitle}`,
-      metadata: { submissionId },
+      type: "cfp_status_changed",
+      title: `Proposal ${newStatus === "approved" ? "Approved!" : "Updated"}`,
+      message: `Your proposal "${submission.title}" for ${submission.cfpTitle} ${statusLabels[newStatus] || "status changed"}.`,
+      link: `/submissions/${submissionId}`,
     });
+
+    if (newStatus === "approved") {
+      await db.insert(activityLog).values({
+        userId: submission.userId,
+        actionType: "cfp_approved",
+        description: `Talk "${submission.title}" approved for ${submission.cfpTitle}`,
+        metadata: { submissionId },
+      });
+    }
   }
 
   revalidatePath("/submissions");
@@ -410,11 +497,13 @@ export async function getCfpSubmissions(
       avgRating: cfpSubmissions.avgRating,
       createdAt: cfpSubmissions.createdAt,
       userId: cfpSubmissions.userId,
+      guestName: cfpSubmissions.guestName,
+      guestEmail: cfpSubmissions.guestEmail,
       speakerName: users.name,
       speakerEmail: users.email,
     })
     .from(cfpSubmissions)
-    .innerJoin(users, eq(cfpSubmissions.userId, users.id))
+    .leftJoin(users, eq(cfpSubmissions.userId, users.id))
     .where(whereClause)
     .orderBy(desc(cfpSubmissions.createdAt))
     .limit(limit)
@@ -485,6 +574,8 @@ export async function getSubmissionForReview(submissionId: string) {
       createdAt: cfpSubmissions.createdAt,
       updatedAt: cfpSubmissions.updatedAt,
       userId: cfpSubmissions.userId,
+      guestName: cfpSubmissions.guestName,
+      guestEmail: cfpSubmissions.guestEmail,
       cfpId: cfpSubmissions.cfpId,
       cfpTitle: cfps.title,
       speakerName: users.name,
@@ -492,7 +583,7 @@ export async function getSubmissionForReview(submissionId: string) {
     })
     .from(cfpSubmissions)
     .innerJoin(cfps, eq(cfpSubmissions.cfpId, cfps.id))
-    .innerJoin(users, eq(cfpSubmissions.userId, users.id))
+    .leftJoin(users, eq(cfpSubmissions.userId, users.id))
     .where(eq(cfpSubmissions.id, submissionId))
     .limit(1);
 
@@ -578,21 +669,23 @@ export async function bulkUpdateStatus(
   };
 
   for (const sub of submissions.filter((s) => validIds.includes(s.id))) {
-    await db.insert(notifications).values({
-      userId: sub.userId,
-      type: "cfp_status_changed",
-      title: `Proposal ${newStatus === "approved" ? "Approved!" : "Updated"}`,
-      message: `Your proposal "${sub.title}" for ${sub.cfpTitle} ${statusLabels[newStatus] || "status changed"}.`,
-      link: `/submissions/${sub.id}`,
-    });
-
-    if (newStatus === "approved") {
-      await db.insert(activityLog).values({
+    if (sub.userId) {
+      await db.insert(notifications).values({
         userId: sub.userId,
-        actionType: "cfp_approved",
-        description: `Talk "${sub.title}" approved for ${sub.cfpTitle}`,
-        metadata: { submissionId: sub.id },
+        type: "cfp_status_changed",
+        title: `Proposal ${newStatus === "approved" ? "Approved!" : "Updated"}`,
+        message: `Your proposal "${sub.title}" for ${sub.cfpTitle} ${statusLabels[newStatus] || "status changed"}.`,
+        link: `/submissions/${sub.id}`,
       });
+
+      if (newStatus === "approved") {
+        await db.insert(activityLog).values({
+          userId: sub.userId,
+          actionType: "cfp_approved",
+          description: `Talk "${sub.title}" approved for ${sub.cfpTitle}`,
+          metadata: { submissionId: sub.id },
+        });
+      }
     }
   }
 

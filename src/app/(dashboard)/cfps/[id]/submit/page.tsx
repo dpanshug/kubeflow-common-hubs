@@ -1,4 +1,4 @@
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { eq, and } from "drizzle-orm";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
@@ -41,10 +41,6 @@ export default async function SubmitCfpPage({ params }: PageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect(`/login?next=/cfps/${id}/submit`);
-  }
-
   const [cfp] = await db.select().from(cfps).where(eq(cfps.id, id)).limit(1);
 
   if (!cfp) {
@@ -73,48 +69,56 @@ export default async function SubmitCfpPage({ params }: PageProps) {
     );
   }
 
-  const [existingSub] = await db
-    .select({ id: cfpSubmissions.id })
-    .from(cfpSubmissions)
-    .where(
-      and(eq(cfpSubmissions.cfpId, id), eq(cfpSubmissions.userId, user.id))
-    )
-    .limit(1);
+  if (user) {
+    const [existingSub] = await db
+      .select({ id: cfpSubmissions.id })
+      .from(cfpSubmissions)
+      .where(
+        and(eq(cfpSubmissions.cfpId, id), eq(cfpSubmissions.userId, user.id))
+      )
+      .limit(1);
 
-  if (existingSub) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <div className="flex justify-center mb-4">
-          <div className="flex size-14 items-center justify-center rounded-full bg-emerald-500/10">
-            <CheckCircle2 className="size-7 text-emerald-400" />
+    if (existingSub) {
+      return (
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-12 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="flex size-14 items-center justify-center rounded-full bg-emerald-500/10">
+              <CheckCircle2 className="size-7 text-emerald-400" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Already Submitted</h1>
+          <p className="text-text-secondary mb-6">
+            You&apos;ve already submitted a proposal to this CFP.
+          </p>
+          <div className="flex justify-center gap-3">
+            <Button variant="outline" asChild>
+              <Link href={`/cfps/${id}`}>
+                <ArrowLeft className="size-4" />
+                Back to CFP
+              </Link>
+            </Button>
+            <Button variant="gradient" asChild>
+              <Link href={`/submissions/${existingSub.id}`}>
+                View My Submission
+              </Link>
+            </Button>
           </div>
         </div>
-        <h1 className="text-2xl font-bold mb-2">Already Submitted</h1>
-        <p className="text-text-secondary mb-6">
-          You&apos;ve already submitted a proposal to this CFP.
-        </p>
-        <div className="flex justify-center gap-3">
-          <Button variant="outline" asChild>
-            <Link href={`/cfps/${id}`}>
-              <ArrowLeft className="size-4" />
-              Back to CFP
-            </Link>
-          </Button>
-          <Button variant="gradient" asChild>
-            <Link href={`/submissions/${existingSub.id}`}>
-              View My Submission
-            </Link>
-          </Button>
-        </div>
-      </div>
-    );
+      );
+    }
   }
 
-  const [profile] = await db
-    .select({ bio: profiles.bio })
-    .from(profiles)
-    .where(eq(profiles.userId, user.id))
-    .limit(1);
+  const isGuest = !user;
+
+  let defaultSpeakerBio = "";
+  if (user) {
+    const [profile] = await db
+      .select({ bio: profiles.bio })
+      .from(profiles)
+      .where(eq(profiles.userId, user.id))
+      .limit(1);
+    defaultSpeakerBio = profile?.bio ?? "";
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-12">
@@ -132,7 +136,8 @@ export default async function SubmitCfpPage({ params }: PageProps) {
         cfpTitle={cfp.title}
         cfpDeadline={cfp.deadline.toISOString()}
         acceptedFormats={cfp.acceptedFormats ?? []}
-        defaultSpeakerBio={profile?.bio ?? ""}
+        defaultSpeakerBio={defaultSpeakerBio}
+        isGuest={isGuest}
       />
     </div>
   );
