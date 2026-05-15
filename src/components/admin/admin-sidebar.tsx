@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
+import { useState, useTransition, useCallback, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Calendar,
@@ -19,6 +20,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/providers";
@@ -96,10 +98,12 @@ function NavLink({
   item,
   collapsed,
   onClick,
+  isPending,
 }: {
   item: NavItem;
   collapsed: boolean;
-  onClick?: () => void;
+  onClick?: (href: string) => void;
+  isPending?: boolean;
 }) {
   const pathname = usePathname();
   const isActive =
@@ -110,17 +114,26 @@ function NavLink({
   return (
     <Link
       href={item.href}
-      onClick={onClick}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        onClick?.(item.href);
+      }}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         isActive
           ? "bg-bg-tertiary text-text-primary"
           : "text-text-muted hover:bg-bg-tertiary/50 hover:text-text-primary",
+        isPending && "bg-bg-tertiary/50 text-text-primary",
         collapsed && "justify-center px-2"
       )}
       title={collapsed ? item.label : undefined}
     >
-      <item.icon className="size-[18px] shrink-0" />
+      {isPending ? (
+        <Loader2 className="size-[18px] shrink-0 animate-spin" />
+      ) : (
+        <item.icon className="size-[18px] shrink-0" />
+      )}
       {!collapsed && <span>{item.label}</span>}
     </Link>
   );
@@ -149,6 +162,28 @@ export function AdminSidebar() {
     getCollapsedServerSnapshot,
   );
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [prevPathname, setPrevPathname] = useState<string | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isNavigating, startTransition] = useTransition();
+
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setPendingHref(null);
+  }
+
+  const handleNavClick = useCallback(
+    (href: string) => {
+      if (href === pathname) return;
+      setPendingHref(href);
+      setMobileOpen(false);
+      startTransition(() => {
+        router.push(href);
+      });
+    },
+    [pathname, router],
+  );
 
   function toggleCollapse() {
     localStorage.setItem(SIDEBAR_KEY, String(!collapsed));
@@ -189,7 +224,8 @@ export function AdminSidebar() {
                   key={item.href}
                   item={item}
                   collapsed={collapsed}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={handleNavClick}
+                  isPending={pendingHref === item.href && isNavigating}
                 />
               ))}
             </div>
