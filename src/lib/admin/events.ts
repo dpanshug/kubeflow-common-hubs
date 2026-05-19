@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { logAuditAsync } from "./audit-helper";
 import { revalidatePath } from "next/cache";
 import { createEventSchema, type CreateEventInput } from "@/lib/validations/events";
+import { EVENT_TIMEZONE_OFFSET } from "@/lib/constants";
 import { z } from "zod";
 
 const uuidSchema = z.string().uuid();
@@ -145,8 +146,8 @@ export async function createEvent(input: CreateEventInput) {
       shortDescription: data.shortDescription || null,
       location: data.location || null,
       city: data.city || null,
-      eventDate: new Date(data.eventDate),
-      eventEndDate: data.eventEndDate ? new Date(data.eventEndDate) : null,
+      eventDate: new Date(data.eventDate + EVENT_TIMEZONE_OFFSET),
+      eventEndDate: data.eventEndDate ? new Date(data.eventEndDate + EVENT_TIMEZONE_OFFSET) : null,
       type: data.type,
       status: data.status,
       bannerUrl: data.bannerUrl || null,
@@ -194,8 +195,8 @@ export async function updateEvent(id: string, input: CreateEventInput) {
       shortDescription: data.shortDescription || null,
       location: data.location || null,
       city: data.city || null,
-      eventDate: new Date(data.eventDate),
-      eventEndDate: data.eventEndDate ? new Date(data.eventEndDate) : null,
+      eventDate: new Date(data.eventDate + EVENT_TIMEZONE_OFFSET),
+      eventEndDate: data.eventEndDate ? new Date(data.eventEndDate + EVENT_TIMEZONE_OFFSET) : null,
       type: data.type,
       status: data.status,
       bannerUrl: data.bannerUrl || null,

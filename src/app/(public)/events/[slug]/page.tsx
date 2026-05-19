@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShareButton } from "@/components/common/share-button";
 import { EventCard } from "@/components/events/event-card";
-import { SITE_URL } from "@/lib/constants";
+import { SITE_URL, EVENT_TIMEZONE } from "@/lib/constants";
 import { getEventBySlug, getRelatedEvents } from "@/lib/public/events";
 
 type EventType = "meetup" | "conference" | "workshop" | "hackathon" | "webinar";
@@ -40,6 +40,7 @@ interface PageProps {
 
 function formatDateRange(start: Date, end?: Date | null): string {
   const options: Intl.DateTimeFormatOptions = {
+    timeZone: EVENT_TIMEZONE,
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -52,17 +53,20 @@ function formatDateRange(start: Date, end?: Date | null): string {
     return start.toLocaleString("en-IN", options);
   }
 
-  const sameDay = start.toDateString() === end.toDateString();
+  const tz = { timeZone: EVENT_TIMEZONE };
+  const sameDay =
+    start.toLocaleDateString("en-IN", tz) === end.toLocaleDateString("en-IN", tz);
 
   if (sameDay) {
     const datePart = start.toLocaleDateString("en-IN", {
+      timeZone: EVENT_TIMEZONE,
       weekday: "long",
       day: "numeric",
       month: "long",
       year: "numeric",
     });
-    const startTime = start.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
-    const endTime = end.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+    const startTime = start.toLocaleTimeString("en-IN", { timeZone: EVENT_TIMEZONE, hour: "2-digit", minute: "2-digit" });
+    const endTime = end.toLocaleTimeString("en-IN", { timeZone: EVENT_TIMEZONE, hour: "2-digit", minute: "2-digit" });
     return `${datePart}, ${startTime} – ${endTime}`;
   }
 
@@ -118,9 +122,9 @@ export default async function EventDetailPage({ params }: PageProps) {
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--kf-blue)]/5 to-[var(--kf-teal)]/5" />
           <div className="absolute top-4 left-4 bg-bg-primary/90 backdrop-blur-sm rounded-lg px-4 py-2 text-center border border-border">
             <div className="text-[10px] uppercase tracking-wider font-medium text-[var(--kf-blue)]">
-              {startDate.toLocaleDateString("en-IN", { month: "short" }).toUpperCase()}
+              {startDate.toLocaleDateString("en-IN", { month: "short", timeZone: EVENT_TIMEZONE }).toUpperCase()}
             </div>
-            <div className="text-2xl font-bold leading-tight">{startDate.getDate()}</div>
+            <div className="text-2xl font-bold leading-tight">{parseInt(startDate.toLocaleDateString("en-IN", { day: "numeric", timeZone: EVENT_TIMEZONE }))}</div>
           </div>
         </div>
       </div>

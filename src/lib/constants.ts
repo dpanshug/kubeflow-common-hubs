@@ -1,3 +1,6 @@
+export const EVENT_TIMEZONE = "Asia/Kolkata";
+export const EVENT_TIMEZONE_OFFSET = "+05:30";
+
 export const SITE_NAME = "Kubeflow Common Hubs";
 export const SITE_DESCRIPTION =
   "The one-stop community hub for Kubeflow in India. Learn, contribute, and grow with the community.";
