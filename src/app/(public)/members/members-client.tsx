@@ -9,7 +9,6 @@ type Member = {
   title: string;
   company: string;
   level: number;
-  badges: number;
   location: string;
 };
 

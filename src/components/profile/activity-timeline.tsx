@@ -1,5 +1,4 @@
 import {
-  Trophy,
   Calendar,
   FileText,
   Star,
@@ -30,12 +29,11 @@ interface ActivityItem {
   createdAt: Date | string;
 }
 
-const ACTIVITY_ICONS: Record<ActivityType, React.ReactNode> = {
+const ACTIVITY_ICONS: Partial<Record<ActivityType, React.ReactNode>> = {
   profile_completed: <UserCheck className="size-3.5" />,
   event_attended: <Calendar className="size-3.5" />,
   cfp_submitted: <FileText className="size-3.5" />,
   cfp_approved: <Star className="size-3.5" />,
-  badge_earned: <Trophy className="size-3.5" />,
   level_up: <ArrowUp className="size-3.5" />,
   pr_merged: <GitPullRequest className="size-3.5" />,
   issue_filed: <AlertCircle className="size-3.5" />,
