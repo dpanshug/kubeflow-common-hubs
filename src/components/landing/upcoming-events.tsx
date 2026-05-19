@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MapPin, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollReveal } from "./scroll-reveal";
+import { EVENT_TIMEZONE } from "@/lib/constants";
 
 type BadgeVariant =
   | "meetup"
@@ -70,10 +71,10 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
 
                       <div className="absolute top-3 left-3 bg-bg-primary/90 backdrop-blur-sm rounded-lg px-3 py-1.5 text-center border border-border">
                         <div className="text-[10px] uppercase tracking-wider font-medium text-[var(--kf-blue)]">
-                          {date.toLocaleDateString("en-IN", { month: "short" }).toUpperCase()}
+                          {date.toLocaleDateString("en-IN", { month: "short", timeZone: EVENT_TIMEZONE }).toUpperCase()}
                         </div>
                         <div className="text-lg font-bold leading-tight">
-                          {date.getDate()}
+                          {date.toLocaleDateString("en-IN", { day: "numeric", timeZone: EVENT_TIMEZONE })}
                         </div>
                       </div>
                     </div>

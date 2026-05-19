@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MapPin, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { EVENT_TIMEZONE } from "@/lib/constants";
 
 type EventType = "meetup" | "conference" | "workshop" | "hackathon" | "webinar";
 
@@ -47,10 +48,10 @@ export function EventCard({
         </Badge>
         <div className="text-right">
           <div className="text-xs uppercase tracking-wider font-medium text-[var(--kf-blue)]">
-            {date.toLocaleDateString("en-IN", { month: "short" })}
+            {date.toLocaleDateString("en-IN", { month: "short", timeZone: EVENT_TIMEZONE })}
           </div>
           <div className="text-lg font-bold leading-tight">
-            {date.getDate()}
+            {date.toLocaleDateString("en-IN", { day: "numeric", timeZone: EVENT_TIMEZONE })}
           </div>
         </div>
       </div>
@@ -73,6 +74,7 @@ export function EventCard({
             weekday: "short",
             day: "numeric",
             month: "short",
+            timeZone: EVENT_TIMEZONE,
             ...(showTime && { hour: "2-digit", minute: "2-digit" }),
           })}
         </div>

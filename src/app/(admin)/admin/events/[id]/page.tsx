@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getEventById } from "@/lib/admin/events";
 import { EventForm } from "../event-form";
+import { EVENT_TIMEZONE } from "@/lib/constants";
 import type { Metadata } from "next";
 
 interface Props {
@@ -19,6 +20,18 @@ export default async function EditEventPage({ params }: Props) {
 
   if (!event) notFound();
 
+  function toISTDatetimeLocal(date: Date): string {
+    const formatted = date.toLocaleString("sv-SE", {
+      timeZone: EVENT_TIMEZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return formatted.replace(" ", "T");
+  }
+
   const initial = {
     title: event.title,
     slug: event.slug,
@@ -26,9 +39,9 @@ export default async function EditEventPage({ params }: Props) {
     shortDescription: event.shortDescription || "",
     location: event.location || "",
     city: event.city || "",
-    eventDate: event.eventDate.toISOString().slice(0, 16),
+    eventDate: toISTDatetimeLocal(event.eventDate),
     eventEndDate: event.eventEndDate
-      ? event.eventEndDate.toISOString().slice(0, 16)
+      ? toISTDatetimeLocal(event.eventEndDate)
       : "",
     type: event.type as "meetup" | "conference" | "workshop" | "hackathon" | "webinar",
     status: event.status as "draft" | "upcoming" | "live" | "completed" | "cancelled",
